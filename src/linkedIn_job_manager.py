@@ -29,13 +29,13 @@ class LinkedInJobManager:
         self.mode = parameters['mode']
         self.positions = parameters['positions']
         self.locations = parameters['locations']
-        self.resume_path = Path(parameters['uploads']['resume'])
+        self.resume_docx_path = Path(parameters['uploads']['resume_docx_path'])
         self.database_url = parameters['database_url']
         self.companies_blacklist = parameters['companies_blacklist']
         self.gpt_answerer = gpt_answerer
         self.base_search_url = self.get_base_search_url(parameters)
         self.easy_applier_component = LinkedInEasyApplier(
-            self.browser, self.resume_path, self.gpt_answerer, parameters)
+            self.browser, self.resume_docx_path, self.gpt_answerer, parameters)
 
     def _load_jobs(self) -> List[dict]:
         logger.debug("Loading cache from JSON file: %s", type)

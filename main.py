@@ -21,14 +21,14 @@ def validate_data_folder(data_folder: Path) -> tuple:
         raise FileNotFoundError(
             f"Data folder not found: {data_folder}")
 
-    required_files = ['resume.docx', 'config.yaml', 'plain_text_resume.yaml']
+    required_files = ['resume.docx', 'config.yaml', 'resume.yaml']
     missing_files = [file for file in required_files if not (
         data_folder / file).exists()]
     if missing_files:
         raise FileNotFoundError(f"Missing files in the data folder: {
                                 ', '.join(missing_files)}")
 
-    return (data_folder / 'resume.docx', data_folder / 'config.yaml', data_folder / 'plain_text_resume.yaml')
+    return (data_folder / 'resume.docx', data_folder / 'config.yaml', data_folder / 'resume.yaml')
 
 
 def validate_yaml_file(yaml_path: Path) -> dict:
@@ -175,26 +175,26 @@ def main():
     llm_api_key = get_env_variable('LLM_API_KEY')
     model_name = get_env_variable('LLM_MODEL_NAME')
 
-    resume, config_file, plain_text_resume_file = validate_data_folder(
+    resume_docx_path, config_file, resume_yaml_path = validate_data_folder(
         Path("data"))
 
     parameters = validate_config(config_file)
     parameters['uploads'] = {
-        'plainTextResume': plain_text_resume_file,
-        'resume': resume
+        'resume_yaml_path': resume_yaml_path,
+        'resume_docx_path': resume_docx_path
     }
     parameters['outputFileDirectory'] = Path("output")
     parameters['mode'] = get_env_variable('MODE')
     parameters['database_url'] = get_env_variable('DATABASE_URL')
 
-    with open(parameters['uploads']['plainTextResume'], "r", encoding='utf-8') as file:
-        plain_text_resume = file.read()
+    with open(parameters['uploads']['resume_yaml_path'], "r", encoding='utf-8') as file:
+        resume_yaml = file.read()
 
     browser = webdriver.Chrome(service=ChromeService(
         ChromeDriverManager().install()), options=chrome_browser_options())
 
     gpt_answerer = GPTAnswerer(model_name=model_name, openai_api_key=llm_api_key,
-                               resume=Resume(plain_text_resume), job_application_profile=JobApplicationProfile(plain_text_resume))
+                               resume=Resume(resume_yaml), job_application_profile=JobApplicationProfile(resume_yaml))
     authenticator = LinkedInAuthenticator(
         browser=browser, email=email, password=password)
     manager = LinkedInJobManager(browser=browser, parameters=parameters,

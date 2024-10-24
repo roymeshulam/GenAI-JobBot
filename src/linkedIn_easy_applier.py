@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+from pathlib import Path
 import random
 import re
 import time
@@ -29,7 +30,7 @@ from reportlab.pdfbase import pdfmetrics
 
 
 class LinkedInEasyApplier:
-    def __init__(self, browser: Chrome, resume_dir: Optional[str], gpt_answerer: GPTAnswerer, parameters: dict):
+    def __init__(self, browser: Chrome, resume_dir: Path, gpt_answerer: GPTAnswerer, parameters: dict):
         self.browser = browser
         self.resume_path = resume_dir
         self.gpt_answerer = gpt_answerer

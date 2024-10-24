@@ -165,7 +165,7 @@ chrome_profile/
 # Project specifics
 data/resume.docx
 data/config.yaml
-data/plain_text_resume.yaml
+data/resume.yaml
 cover_letters/*
 .vscode
 log.txt
