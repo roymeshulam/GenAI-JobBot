@@ -1,0 +1,138 @@
+---
+personal_information:
+  name: Alex
+  surname: Thompson
+  date_of_birth: 15/03/1988
+  country: United States
+  city: Boston
+  address: 123 Tech Park Drive
+  phone_prefix: "+1"
+  phone: "6175550123"
+  email: alex.thompson@email.com
+  github: https://github.com/alexthompson
+  linkedin: https://www.linkedin.com/in/alexthompson/
+  zip_code: 02108
+
+education_details:
+  - education_level: B.Sc.
+    institution: Massachusetts Institute of Technology
+    final_evaluation_grade: 3.8/4
+    education_period: Sep/2006 - May/2010
+    field_of_study: Computer Science
+    city: Cambridge
+  - education_level: M.Sc.
+    institution: Stanford University
+    final_evaluation_grade: 3.9/4
+    education_period: Sep/2010 - Jun/2012
+    field_of_study: Artificial Intelligence
+    city: Stanford
+  - education_level: Executive MBA
+    institution: Harvard Business School
+    final_evaluation_grade: 3.85/4
+    education_period: Sep/2020 - May/2022
+    field_of_study: Business Administration
+    city: Boston
+
+experience_details:
+  - position: AI Research Lead
+    company: TechVision AI
+    employment_period: Jan/2021 - Present
+    location: United States
+    industry: Artificial Intelligence
+    key_responsibilities:
+      - responsibility_1: Led development of large language models resulting in 40% 
+          improvement in inference speed and 25% reduction in computational costs
+      - responsibility_2: Managed team of 15 AI researchers, resulting in 8 
+          successful product launches and 3 patent applications
+      - responsibility_3: Established partnerships with 5 major tech companies, 
+          leading to $10M in additional revenue
+    skills_acquired:
+      - Large Language Models
+      - Team Leadership
+      - Strategic Partnerships
+  
+  - position: Senior ML Engineer
+    company: DataPrime Solutions
+    employment_period: Jun/2017 - Dec/2020
+    location: United States
+    industry: Machine Learning
+    key_responsibilities:
+      - responsibility_1: Developed and deployed machine learning models that 
+          improved customer prediction accuracy by 35%
+      - responsibility_2: Led cross-functional team of 8 engineers in implementing 
+          automated ML pipeline, reducing deployment time by 60%
+      - responsibility_3: Designed and implemented real-time recommendation system 
+          serving 1M+ daily users
+    skills_acquired:
+      - Machine Learning Operations
+      - Team Management
+      - System Architecture
+
+projects:
+  - name: NeuralNet Optimization Framework
+    description: Developed an open-source framework for optimizing neural network 
+      architectures, achieved 50,000+ GitHub stars and adoption by major tech companies
+    link: https://github.com/alexthompson/neuralnet-opt
+
+achievements:
+  - name: Best Paper Award at NeurIPS 2022
+    description: Recognized for groundbreaking research in efficient transformer architectures
+  - name: Tech Innovator of the Year 2021
+    description: Awarded by Boston Technology Council for contributions to AI advancement
+
+certifications:
+  - name: Google Cloud Professional ML Engineer
+    description: Advanced certification in machine learning engineering on GCP
+  - name: AWS Advanced AI Specialist
+    description: Expert-level certification in AI services on AWS
+  - name: Deep Learning Specialization
+    description: Complete specialization from deeplearning.ai
+  - name: MLOps Engineering Certificate
+    description: Advanced certification in ML operations and deployment
+
+languages:
+  - language: English
+    proficiency: Native
+  - language: Mandarin
+    proficiency: Professional
+  - language: Spanish
+    proficiency: Conversational
+
+interests:
+  - Quantum Computing
+  - Neural Architecture Search
+  - Ethical AI
+  - Computational Linguistics
+  - Edge Computing
+  - Reinforcement Learning
+
+availability:
+  notice_period: 3 months
+
+salary_expectations:
+  salary_range_usd: 200000 - 250000
+
+self_identification:
+  gender: Non-Binary
+  pronouns: They/Them
+  veteran: false
+  disability: false
+  ethnicity: Mixed Race
+
+legal_authorization:
+  eu_work_authorization: false
+  us_work_authorization: true
+  requires_us_visa: false
+  requires_us_sponsorship: false
+  requires_eu_visa: true
+  legally_allowed_to_work_in_eu: false
+  legally_allowed_to_work_in_us: true
+  requires_eu_sponsorship: true
+
+work_preferences:
+  remote_work: true
+  in_person_work: true
+  open_to_relocation: true
+  willing_to_complete_assessments: true
+  willing_to_undergo_drug_tests: true
+  willing_to_undergo_background_checks: true
