@@ -337,31 +337,30 @@ class LinkedInEasyApplier:
         file_path_pdf = os.path.join(
             folder_path, f"{job.title} - {job.company} Cover Letter.pdf")
         try:
-            if not os.path.exists(file_path_pdf):
-                cover_letter_text = 'Dear Sir or Madam,\n\n' + self.gpt_answerer.answer_question_textual_wide_range(
-                    "Write a cover letter") + '\n\nThank you for your consideration.'
-                c = canvas.Canvas(file_path_pdf, pagesize=A4)
-                page_width, page_height = A4
-                text_object = c.beginText(50, page_height - 50)
-                text_object.setFont("Helvetica", 12)
-                max_width = round(page_width - 100)
-                bottom_margin = 50
+            cover_letter_text = 'Dear Sir or Madam,\n\n' + self.gpt_answerer.answer_question_textual_wide_range(
+                "Write a cover letter") + '\n\nThank you for your consideration.'
+            c = canvas.Canvas(file_path_pdf, pagesize=A4)
+            page_width, page_height = A4
+            text_object = c.beginText(50, page_height - 50)
+            text_object.setFont("Helvetica", 12)
+            max_width = round(page_width - 100)
+            bottom_margin = 50
 
-                lines = self._split_text_by_width(
-                    cover_letter_text, "Helvetica", 12, max_width)
+            lines = self._split_text_by_width(
+                cover_letter_text, "Helvetica", 12, max_width)
 
-                for line in lines:
-                    text_height = text_object.getY()
-                    if text_height > bottom_margin:
-                        text_object.textLine(line)
-                    else:
-                        c.drawText(text_object)
-                        c.showPage()
-                        text_object = c.beginText(50, page_height - 50)
-                        text_object.setFont("Helvetica", 12)
-                        text_object.textLine(line)
-                c.drawText(text_object)
-                c.save()
+            for line in lines:
+                text_height = text_object.getY()
+                if text_height > bottom_margin:
+                    text_object.textLine(line)
+                else:
+                    c.drawText(text_object)
+                    c.showPage()
+                    text_object = c.beginText(50, page_height - 50)
+                    text_object.setFont("Helvetica", 12)
+                    text_object.textLine(line)
+            c.drawText(text_object)
+            c.save()
         except Exception as e:
             logger.error(f"Failed to generate cover letter: {e}")
             tb_str = traceback.format_exc()
