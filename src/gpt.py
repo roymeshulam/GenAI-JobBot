@@ -11,7 +11,7 @@ from src.models import Job
 from src.models import Resume
 from src.models import JobApplicationProfile
 
-if os.getenv('ENV') == 'langtrace':
+if 'langtrace' in os.getenv('MODE'):
     from langtrace_python_sdk import langtrace
     langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
 

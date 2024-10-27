@@ -232,13 +232,13 @@ class LinkedInEasyApplier:
         start_time = time.time()
         while time.time() - start_time < 600:
             self.fill_up(job)
-            if self._application_submitted(job) == True:
+            if self._application_submitted() == True:
                 logger.debug("Application form submitted")
                 break
         else:
             raise TimeoutError("Failed applying within 10 minutes")
 
-    def _application_submitted(self, job: Job) -> bool:
+    def _application_submitted(self) -> bool:
         logger.debug("Clicking 'Next' or 'Submit' button")
         next_button = self.browser.find_element(
             By.XPATH, "//button[contains(@class, 'artdeco-button--primary') and (span[text()='Next'] or span[text()='Review'] or span[text()='Submit application'] or span[text()='Continue applying'])]")
@@ -551,7 +551,7 @@ class LinkedInEasyApplier:
         radios[-1].find_element(By.TAG_NAME, 'label').click()
         time.sleep(random.uniform(1, 3))
 
-    def _select_dropdown_option(self, select: WebElement, text: str) -> None:
+    def _select_dropdown_option(self, select: Select, text: str) -> None:
         select.select_by_visible_text(text)
         time.sleep(random.uniform(1, 3))
 

@@ -32,13 +32,12 @@ python .\update_packages.py
 # Configuration
 Create a .env file based on the template .env.template and fill in the relevant details:
 ```
-ENV=production/langtrace
 LANGTRACE_API_KEY=LANGTRACE_API_KEY
 LINKEDIN_EMAIL=LINKEDIN_EMAIL
 LINKEDIN_PASSWORD=LINKEDIN_PASSWORD
 LLM_API_KEY=LLM_API_KEY
 LLM_MODEL_NAME=gpt-4o-mini
-MODE=apply/reapply/reconnect
+MODE=apply/reapply/reconnect/apply-langtrace/reapply-langtrace/reconnect-langtrace
 DATABASE_URL=URL
 ```
 Create a config.yaml based on the template provided:

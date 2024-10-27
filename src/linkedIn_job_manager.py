@@ -1,4 +1,3 @@
-from datetime import datetime
 import random
 import time
 from itertools import product
@@ -42,14 +41,14 @@ class LinkedInJobManager:
         try:
             conn = psycopg2.connect(self.database_url)
             cursor = conn.cursor()
-            if self.mode == 'reapply':
+            if 'reapply' in self.mode:
                 query = """
                 SELECT *
                 FROM jobs
                 WHERE applied = FALSE
                 ORDER BY id DESC
                 """
-            elif self.mode == 'recoonect':
+            elif 'recoonect' in self.mode:
                 query = """
                 SELECT *
                 FROM jobs
@@ -85,7 +84,11 @@ class LinkedInJobManager:
             cursor = conn.cursor()
             insert_query = """
             INSERT INTO jobs (company, title, link, recruiter, location, applied, connected)
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (link) 
+            DO UPDATE SET 
+                applied = EXCLUDED.applied,
+                connected = EXCLUDED.connected;
             """
             cursor.execute(insert_query, (job.company, job.title, job.link,
                            job.recruiter, job.location, applied, connected))
@@ -99,35 +102,13 @@ class LinkedInJobManager:
             if conn:
                 conn.close()
 
-    def _update_job(self, job: Job, applied: bool, connected: bool) -> None:
-        logger.debug("Updating job: %s", job)
-        try:
-            conn = psycopg2.connect(self.database_url)
-            cursor = conn.cursor()
-            update_query = """
-            UPDATE jobs
-            SET applied = %s, connected = %s
-            WHERE company = %s AND title = %s;
-            """
-            cursor.execute(
-                update_query, (applied, connected, job.company, job.title))
-            conn.commit()
-        except Exception as e:
-            logger.error(f'Error updating job: {job} {e}')
-            raise RuntimeError(f'Error updating job: {job} {e}')
-        finally:
-            if cursor:
-                cursor.close()
-            if conn:
-                conn.close()
-
     def run(self):
-        if (self.mode == 'apply'):
-            self.apply()
-        elif (self.mode == 'reconnect'):
-            self.reconnect()
-        elif (self.mode == 'reapply'):
+        if ('reapply' in self.mode):
             self.reapply()
+        elif ('reconnect' in self.mode):
+            self.reconnect()
+        else:
+            self.apply()
 
     def apply(self):
         logger.info("Starting job application process")
@@ -264,8 +245,8 @@ class LinkedInJobManager:
                         job.title} at {job.company}")
                     if self.easy_applier_component.job_apply(job=job) == True:
                         logger.info("Reaplied succeed")
-                        self._update_job(job=job, applied=True,
-                                         connected=job.connected)
+                        self._save_job(job=job, applied=True,
+                                       connected=job.connected)
                     else:
                         logger.warning("Failed reapply")
                 except Exception as e:
@@ -278,8 +259,8 @@ class LinkedInJobManager:
                 try:
                     job = Job(**jobs[i])
                     if self._recruiter_connect(job=job) == True:
-                        self._update_job(job=job, applied=job.applied,
-                                         connected=True)
+                        self._save_job(job=job, applied=job.applied,
+                                       connected=True)
                     else:
                         logger.warning("Failed reconnect")
                 except Exception as e:
