@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 import time
 from src.logging_config import logger
 import yaml
@@ -11,10 +14,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium import webdriver
 from pathlib import Path
 import os
-
-from dotenv import load_dotenv
-load_dotenv(override=True)
-
 
 def validate_data_folder(data_folder: Path) -> tuple:
     if not data_folder.exists() or not data_folder.is_dir():
