@@ -153,7 +153,7 @@ class Job:
     id: str = ""
     description: str = ""
     applied: bool = False
-    connected: str = False
+    connected: bool = False
 
     def set_job_description(self, description):
         self.description = description

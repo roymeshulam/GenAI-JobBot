@@ -48,7 +48,7 @@ class LinkedInJobManager:
                 WHERE applied = FALSE
                 ORDER BY id DESC
                 """
-            elif 'recoonect' in self.mode:
+            elif 'reconnect' in self.mode:
                 query = """
                 SELECT *
                 FROM jobs
@@ -248,23 +248,32 @@ class LinkedInJobManager:
                         self._save_job(job=job, applied=True,
                                        connected=job.connected)
                     else:
-                        logger.warning("Failed reapply")
-                except Exception as e:
-                    logger.error("Error during reapply: %s", e)
+                        logger.warning("Failed reapply: %s", jobs[i]['link'])
+                except Exception:
+                    logger.error("Error during reapply: %s", jobs[i]['link'])
 
     def reconnect(self) -> None:
+        successes = 0
+        failures = 0
         jobs = self._load_jobs()
         for i in range(len(jobs)):
             if jobs[i]['connected'] == False:
                 try:
                     job = Job(**jobs[i])
                     if self._recruiter_connect(job=job) == True:
+                        successes += 1
+                        logger.info("Success reconnecting: %d/%d, %s",
+                                    successes, failures, jobs[i]['recruiter'])
                         self._save_job(job=job, applied=job.applied,
                                        connected=True)
                     else:
-                        logger.warning("Failed reconnect")
-                except Exception as e:
-                    logger.error("Error during reconnect: %s", e)
+                        failures += 1
+                        logger.warning("Failed reconnect: %d/%d, %s",
+                                       successes, failures, jobs[i]['recruiter'])
+                except Exception:
+                    failures += 1
+                    logger.error("Error during reconnect: %d/%d, %s",
+                                 successes, failures, jobs[i]['recruiter'])
 
     def _recruiter_connect(self, job: Job) -> bool:
         if job.recruiter == '':
