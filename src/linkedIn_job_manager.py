@@ -85,8 +85,8 @@ class LinkedInJobManager:
             insert_query = """
             INSERT INTO jobs (company, title, link, recruiter, location, applied, connected)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (link) 
-            DO UPDATE SET 
+            ON CONFLICT (link)
+            DO UPDATE SET
                 applied = EXCLUDED.applied,
                 connected = EXCLUDED.connected;
             """
@@ -109,6 +109,9 @@ class LinkedInJobManager:
             self.reconnect()
         else:
             self.apply()
+        
+        self.browser.get(
+            'https://www.linkedin.com/feed')
 
     def apply(self):
         logger.info("Starting job application process")
