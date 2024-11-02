@@ -202,9 +202,8 @@ class LinkedInJobManager:
         try:
             daily_applications_exceeded_element = self.browser.find_element(
                 By.CLASS_NAME, 'artdeco-inline-feedback--error')
-            if daily_applications_exceeded_element and 'The application feature is temporarily unavailable' in daily_applications_exceeded_element.text:
-                logger.info(
-                    "Daily applications exceeded.")
+            if daily_applications_exceeded_element.text in ['The application feature is temporarily unavailable',
+                                                            'You’ve reached the Easy Apply application limit for today. Save this job and come back tomorrow to continue applying.']:
                 return True
         except NoSuchElementException:
             pass
