@@ -8,7 +8,7 @@ def update_packages(requirements_file):
     except ImportError:
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "pipreqs"],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     print(f"Updating {requirements_file}...")
     subprocess.run(['pipreqs', '.', '--force'],
@@ -17,10 +17,20 @@ def update_packages(requirements_file):
     with open(requirements_file, 'r') as file:
         lines = file.readlines()
 
-    unique_lines = list(dict.fromkeys(lines))
+    packages = {}
+    for line in lines:
+        if '==' in line:
+            pkg, ver = line.strip().split('==')
+            if pkg in packages:
+                # Keep the latest version
+                if ver > packages[pkg]:
+                    packages[pkg] = ver
+            else:
+                packages[pkg] = ver
 
     with open(requirements_file, 'w') as file:
-        file.writelines(unique_lines)
+        for pkg, ver in packages.items():
+            file.write(f'{pkg}=={ver}\n')
 
     print("Updating project...")
     subprocess.run(['pip', 'install', '-r', requirements_file],
