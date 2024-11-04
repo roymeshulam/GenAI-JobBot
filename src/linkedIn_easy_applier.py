@@ -544,7 +544,7 @@ class LinkedInEasyApplier:
 
     def _select_radio(self, radios: List[WebElement], answer: str) -> None:
         for radio in radios:
-            if answer in radio.text.lower():
+            if answer == radio.text.lower():
                 radio.find_element(By.TAG_NAME, 'label').click()
                 time.sleep(random.uniform(1, 3))
                 return
