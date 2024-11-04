@@ -152,9 +152,9 @@ class LinkedInEasyApplier:
             self._discard_application()
             tb_str = traceback.format_exc()
             logger.error(
-                "Failed to apply to job: %s. Error traceback: %s", job, tb_str)
+                "Failed to apply to job: %s at %s. Error traceback: %s", job.title, job.company, tb_str)
             raise RuntimeError(
-                f"Failed to apply to job! Original exception:\nTraceback:\n{tb_str}")
+                "Failed to apply to job: %s at %s. Error traceback: %s", job.title, job.company, tb_str)
         return True
 
     def _find_easy_apply_button(self) -> WebElement:

@@ -53,6 +53,7 @@ class LinkedInJobManager:
                 SELECT *
                 FROM jobs
                 WHERE connected = FALSE
+                AND applied = TRUE
                 ORDER BY id DESC;
                 """
             else:
@@ -175,7 +176,7 @@ class LinkedInJobManager:
                                             successful_applications}/{failed_applications}')
                                 self._save_job(
                                     job=job, applied=True, connected=True if job.recruiter == '' else False)
-                        except Exception as e:
+                        except Exception:
                             failed_applications += 1
                             logger.info(f'Failed applying to job {job.title} at {job.company}, applications = {
                                 successful_applications}/{failed_applications}')
@@ -270,7 +271,7 @@ class LinkedInJobManager:
                                        connected=True)
                     else:
                         failures += 1
-                        logger.warning("Failed reconnect: %d/%d, %s",
+                        logger.error("Failed reconnect: %d/%d, %s",
                                        successes, failures, jobs[i]['recruiter'])
                 except Exception:
                     failures += 1
