@@ -62,7 +62,8 @@ def validate_config(config_yaml_path: Path) -> dict:
         'date': dict,
         'positions': list,
         'locations': list,
-        'companies_blacklist': list
+        'companies_blacklist': list,
+        'work_types': dict
     }
 
     for key, expected_type in required_keys.items():
@@ -86,6 +87,10 @@ def validate_config(config_yaml_path: Path) -> dict:
     date_filters = ['all time', 'month', 'week', '24 hours']
     validate_boolean_fields(
         date_filters, parameters, 'date', config_yaml_path)
+
+    work_types = ['on-site', 'hybrid', 'remote']
+    validate_boolean_fields(
+        work_types, parameters, 'work_types', config_yaml_path)
 
     validate_string_list(
         parameters, 'positions', config_yaml_path)
@@ -182,7 +187,6 @@ def main():
         'resume_yaml_path': resume_yaml_path,
         'resume_docx_path': resume_docx_path
     }
-    parameters['outputFileDirectory'] = Path("output")
     parameters['mode'] = get_env_variable('MODE')
     parameters['database_url'] = get_env_variable('DATABASE_URL')
 

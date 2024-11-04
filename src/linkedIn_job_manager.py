@@ -110,7 +110,7 @@ class LinkedInJobManager:
             self.reconnect()
         else:
             self.apply()
-        
+
         self.browser.get(
             'https://www.linkedin.com/feed')
 
@@ -272,7 +272,7 @@ class LinkedInJobManager:
                     else:
                         failures += 1
                         logger.error("Failed reconnect: %d/%d, %s",
-                                       successes, failures, jobs[i]['recruiter'])
+                                     successes, failures, jobs[i]['recruiter'])
                 except Exception:
                     failures += 1
                     logger.error("Error during reconnect: %d/%d, %s",
@@ -340,10 +340,14 @@ class LinkedInJobManager:
     def get_base_search_url(self, parameters: dict) -> str:
         logger.debug("Constructing base search URL")
         url_parts = []
-        experience_levels = [str(i + 1) for i, (level, v) in enumerate(parameters.get('experience_level', {}).items()) if
-                             v]
+        experience_levels = [str(
+            i + 1) for i, v in enumerate(parameters.get('experience_level', {}).values()) if v]
         if experience_levels:
             url_parts.append(f"f_E={','.join(experience_levels)}")
+        work_types = [
+            str(i + 1) for i, v in enumerate(parameters.get('work_types', {}).values()) if v]
+        if work_types:
+            url_parts.append(f"f_WT={','.join(work_types)}")
         job_types = [key[0].upper() for key, value in parameters.get(
             'job_types', {}).items() if value]
         if job_types:
@@ -358,7 +362,7 @@ class LinkedInJobManager:
                           if parameters.get('date', {}).get(k)), "")
         url_parts.append("f_LF=f_AL")  # Easy Apply
         base_url = "&".join(url_parts)
-        full_url = f"?{base_url}{date_param}"
+        full_url = f"?{base_url}{date_param}&sortBy=DD"
         logger.debug("Base search URL constructed: %s", full_url)
         return full_url
 

@@ -30,3 +30,7 @@ locations:
 companies_blacklist:
   - Crossover
   - Jobot
+work_types:
+  on-site: false
+  remote: true  
+  hybrid: false
