@@ -13,7 +13,8 @@ from src.logging_config import logger
 import time
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.edge.service import Service as EdgeService
-
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from webdriver_manager.firefox import GeckoDriverManager
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
@@ -114,9 +115,10 @@ def get_browser():
         options = webdriver.ChromeOptions()
     elif browser_name == 'Edge':
         options = webdriver.EdgeOptions()
+    elif browser_name == 'Firefox':
+        options = webdriver.FirefoxOptions()
     else:
-        raise ValueError(f"Unknown browser value '{
-            browser_name}' can be either Edge or Chrome.")
+        raise ValueError(f"Unknown browser value '{browser_name}'.")
 
     options.add_argument("--start-maximized")
     options.add_argument("--hide-crash-restore-bubble")
@@ -137,12 +139,14 @@ def get_browser():
     options.add_argument("--disable-plugins")
     options.add_argument("--disable-animations")
     options.add_argument("--disable-cache")
-    options.add_experimental_option(
-        "excludeSwitches", ["enable-automation", "enable-logging"])
-    options.add_experimental_option("prefs", {
-        "profile.default_content_setting_values.images": 2,
-        "profile.managed_default_content_settings.stylesheets": 2,
-    })
+
+    if browser_name in ['Chrome', 'Edge']:
+        options.add_experimental_option(
+            "excludeSwitches", ["enable-automation", "enable-logging"])
+        options.add_experimental_option("prefs", {
+            "profile.default_content_setting_values.images": 2,
+            "profile.managed_default_content_settings.stylesheets": 2,
+        })
 
     profile_path = os.path.join(
         os.getcwd(), "browser", "linkedin")
@@ -160,6 +164,9 @@ def get_browser():
     elif browser_name == 'Edge':
         browser = webdriver.Edge(service=EdgeService(
             EdgeChromiumDriverManager().install()), options=options)
+    elif browser_name == 'Firefox':
+        browser = webdriver.Firefox(service=FirefoxService(
+            GeckoDriverManager().install()), options=options)
 
     return browser
 

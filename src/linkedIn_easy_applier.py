@@ -470,11 +470,13 @@ class LinkedInEasyApplier:
 
             is_numeric = self._is_numeric_field(text_field)
             question_type = 'numeric' if is_numeric else 'textbox'
-            for item in self.questions:
-                if self._sanitize_text(question_text) == item['question'] and item.get(
-                        'type') == question_type:
-                    self._enter_text(text_field, item['answer'])
-                    return True
+
+            if self._sanitize_text(question_text) not in ['cover letter']:
+                for item in self.questions:
+                    if self._sanitize_text(question_text) == item['question'] and item.get(
+                            'type') == question_type:
+                        self._enter_text(text_field, item['answer'])
+                        return True
 
             answer = self.gpt_answerer.answer_question_numeric(
                 question_text) if is_numeric else self.gpt_answerer.answer_question_textual_wide_range(
