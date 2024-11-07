@@ -3,7 +3,7 @@ import time
 from itertools import product
 from pathlib import Path
 from typing import List, Optional
-from webbrowser import Chrome
+from webbrowser import UnixBrowser
 
 import psycopg2
 from selenium.common.exceptions import NoSuchElementException
@@ -22,7 +22,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 class LinkedInJobManager:
-    def __init__(self, browser: Chrome, parameters: dict, gpt_answerer: GPTAnswerer):
+    def __init__(self, browser: UnixBrowser, parameters: dict, gpt_answerer: GPTAnswerer):
         logger.debug("Initializing LinkedInJobManager")
         self.browser = browser
         self.mode = parameters['mode']

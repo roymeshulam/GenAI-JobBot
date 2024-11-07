@@ -1,19 +1,22 @@
+import os
+from pathlib import Path
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+from src.models import Resume
+from src.gpt import GPTAnswerer
+from src.linkedIn_authenticator import LinkedInAuthenticator
+from src.linkedIn_job_manager import LinkedInJobManager
+from src.models import JobApplicationProfile
+import yaml
+from src.logging_config import logger
+import time
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.edge.service import Service as EdgeService
+
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
-import time
-from src.logging_config import logger
-import yaml
-from src.models import JobApplicationProfile
-from src.linkedIn_job_manager import LinkedInJobManager
-from src.linkedIn_authenticator import LinkedInAuthenticator
-from src.gpt import GPTAnswerer
-from src.models import Resume
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium import webdriver
-from pathlib import Path
-import os
 
 def validate_data_folder(data_folder: Path) -> tuple:
     if not data_folder.exists() or not data_folder.is_dir():
@@ -104,26 +107,17 @@ def validate_config(config_yaml_path: Path) -> dict:
     return parameters
 
 
-def ensure_chrome_profile():
-    chrome_profile_path = os.path.join(
-        os.getcwd(), "chrome_profile", "linkedin_profile")
-    logger.debug("Ensuring Chrome profile exists at path: %s",
-                 chrome_profile_path)
-    profile_dir = os.path.dirname(chrome_profile_path)
-    if not os.path.exists(profile_dir):
-        os.makedirs(profile_dir)
-        logger.debug("Created directory for Chrome profile: %s", profile_dir)
-    if not os.path.exists(chrome_profile_path):
-        os.makedirs(chrome_profile_path)
-        logger.debug("Created Chrome profile directory: %s",
-                     chrome_profile_path)
-    return chrome_profile_path
+def get_browser():
+    logger.debug("Setting browser options")
+    browser_name = get_env_variable('BROWSER')
+    if browser_name == 'Chrome':
+        options = webdriver.ChromeOptions()
+    elif browser_name == 'Edge':
+        options = webdriver.EdgeOptions()
+    else:
+        raise ValueError(f"Unknown browser value '{
+            browser_name}' can be either Edge or Chrome.")
 
-
-def chrome_browser_options():
-    logger.debug("Setting Chrome browser options")
-    chrome_profile_path = ensure_chrome_profile()
-    options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     options.add_argument("--hide-crash-restore-bubble")
     options.add_argument("--no-sandbox")
@@ -145,24 +139,29 @@ def chrome_browser_options():
     options.add_argument("--disable-cache")
     options.add_experimental_option(
         "excludeSwitches", ["enable-automation", "enable-logging"])
-
-    prefs = {
+    options.add_experimental_option("prefs", {
         "profile.default_content_setting_values.images": 2,
         "profile.managed_default_content_settings.stylesheets": 2,
-    }
-    options.add_experimental_option("prefs", prefs)
+    })
 
-    if len(chrome_profile_path) > 0:
-        initial_path = os.path.dirname(chrome_profile_path)
-        profile_dir = os.path.basename(chrome_profile_path)
-        options.add_argument('--user-data-dir=' + initial_path)
-        options.add_argument("--profile-directory=" + profile_dir)
-        logger.debug("Using Chrome profile directory: %s", chrome_profile_path)
-    else:
-        options.add_argument("--incognito")
-        logger.debug("Using Chrome in incognito mode")
+    profile_path = os.path.join(
+        os.getcwd(), "browser", "linkedin")
+    if not os.path.exists(profile_path):
+        os.makedirs(profile_path)
+    logger.debug("Using browser profile directory: %s", profile_path)
+    initial_path = os.path.dirname(profile_path)
+    profile_dir = os.path.basename(profile_path)
+    options.add_argument('--user-data-dir=' + initial_path)
+    options.add_argument("--profile-directory=" + profile_dir)
 
-    return options
+    if browser_name == 'Chrome':
+        browser = webdriver.Chrome(service=ChromeService(
+            ChromeDriverManager().install()), options=options)
+    elif browser_name == 'Edge':
+        browser = webdriver.Edge(service=EdgeService(
+            EdgeChromiumDriverManager().install()), options=options)
+
+    return browser
 
 
 def get_env_variable(var_name: str) -> str:
@@ -193,8 +192,7 @@ def main():
     with open(parameters['uploads']['resume_yaml_path'], "r", encoding='utf-8') as file:
         resume_yaml = file.read()
 
-    browser = webdriver.Chrome(service=ChromeService(
-        ChromeDriverManager().install()), options=chrome_browser_options())
+    browser = get_browser()
 
     gpt_answerer = GPTAnswerer(model_name=model_name, openai_api_key=llm_api_key,
                                resume=Resume(resume_yaml), job_application_profile=JobApplicationProfile(resume_yaml))

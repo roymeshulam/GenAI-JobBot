@@ -1,6 +1,6 @@
 import random
 import time
-from webbrowser import Chrome
+from webbrowser import UnixBrowser
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -12,7 +12,7 @@ from src.logging_config import logger
 
 class LinkedInAuthenticator:
 
-    def __init__(self, browser: Chrome, email: str, password: str):
+    def __init__(self, browser: UnixBrowser, email: str, password: str):
         self.browser = browser
         self.email = email
         self.password = password
@@ -20,7 +20,7 @@ class LinkedInAuthenticator:
             "LinkedInAuthenticator initialized with browser: %s", browser)
 
     def login(self) -> bool:
-        logger.info("Starting Chrome browser to log in to LinkedIn.")
+        logger.info("Starting browser to log in to LinkedIn.")
         self.browser.get('https://www.linkedin.com/feed')
         time.sleep(random.uniform(3, 5))
         if 'login' in self.browser.current_url:

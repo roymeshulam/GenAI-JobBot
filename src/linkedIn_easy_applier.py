@@ -5,8 +5,8 @@ import random
 import re
 import time
 import traceback
-from typing import List, Optional, Any
-from webbrowser import Chrome
+from typing import List, Any
+from webbrowser import UnixBrowser
 
 import psycopg2
 from reportlab.lib.pagesizes import A4
@@ -30,7 +30,7 @@ from reportlab.pdfbase import pdfmetrics
 
 
 class LinkedInEasyApplier:
-    def __init__(self, browser: Chrome, resume_dir: Path, gpt_answerer: GPTAnswerer, parameters: dict):
+    def __init__(self, browser: UnixBrowser, resume_dir: Path, gpt_answerer: GPTAnswerer, parameters: dict):
         self.browser = browser
         self.resume_path = resume_dir
         self.gpt_answerer = gpt_answerer
