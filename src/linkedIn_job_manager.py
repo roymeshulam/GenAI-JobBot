@@ -37,29 +37,14 @@ class LinkedInJobManager:
             self.browser, self.resume_docx_path, self.gpt_answerer, parameters)
 
     def _load_jobs(self) -> List[dict]:
-        logger.debug("Loading cache from JSON file: %s", type)
         try:
             conn = psycopg2.connect(self.database_url)
             cursor = conn.cursor()
-            if 'reapply' in self.mode:
-                query = """
+            query = """
                 SELECT *
                 FROM jobs
                 WHERE applied = FALSE
                 ORDER BY id DESC
-                """
-            elif 'reconnect' in self.mode:
-                query = """
-                SELECT *
-                FROM jobs
-                WHERE connected = FALSE
-                AND applied = TRUE
-                ORDER BY id DESC;
-                """
-            else:
-                query = """
-                SELECT *
-                FROM jobs;
                 """
             cursor.execute(query)
             results = cursor.fetchall()
@@ -72,6 +57,53 @@ class LinkedInJobManager:
         except Exception as e:
             logger.error(f'Error loading jobs: {e}')
             raise RuntimeError(f'Error loading jobs: {e}')
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def _load_recruiters(self) -> List[str]:
+        logger.debug("loading recruiters URLs")
+        try:
+            conn = psycopg2.connect(self.database_url)
+            cursor = conn.cursor()
+            query = """
+            SELECT recruiter
+            FROM jobs
+            WHERE connected = FALSE
+            GROUP BY recruiter
+            ORDER BY COUNT(recruiter) DESC;
+            """
+            cursor.execute(query)
+            results = cursor.fetchall()
+            unique_recruiters = [row[0] for row in results]
+            return unique_recruiters if results else []
+        except Exception as e:
+            logger.error(f'Error loading _load_recruiters: {e}')
+            raise RuntimeError(f'Error loading _load_recruiters: {e}')
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def _save_recruiter(self, recruiter: str):
+        logger.debug(
+            f"Updating recruiter status to connected for: {recruiter}")
+        try:
+            conn = psycopg2.connect(self.database_url)
+            cursor = conn.cursor()
+            query = """
+            UPDATE jobs
+            SET connected = TRUE
+            WHERE recruiter = %s;
+            """
+            cursor.execute(query, (recruiter,))
+            conn.commit()
+        except Exception as e:
+            logger.error(f"Error updating recruiter status: {e}")
+            raise RuntimeError(f"Error updating recruiter status: {e}")
         finally:
             if cursor:
                 cursor.close()
@@ -251,38 +283,34 @@ class LinkedInJobManager:
                         self._save_job(job=job, applied=True,
                                        connected=job.connected)
                     else:
-                        logger.error("Error during reapply: %s", jobs[i]['link'])
+                        logger.error("Error during reapply: %s",
+                                     jobs[i]['link'])
                 except Exception:
                     logger.error("Error during reapply: %s", jobs[i]['link'])
 
     def reconnect(self) -> None:
         successes = 0
         failures = 0
-        jobs = self._load_jobs()
-        for i in range(len(jobs)):
-            if jobs[i]['connected'] == False:
-                try:
-                    job = Job(**jobs[i])
-                    if self._recruiter_connect(job=job) == True:
-                        successes += 1
-                        logger.info("Success reconnecting: %d/%d, %s",
-                                    successes, failures, jobs[i]['recruiter'])
-                        self._save_job(job=job, applied=job.applied,
-                                       connected=True)
-                    else:
-                        failures += 1
-                        logger.error("Failed reconnect: %d/%d, %s",
-                                     successes, failures, jobs[i]['recruiter'])
-                except Exception:
+        recruiters = self._load_recruiters()
+        for recruiter in recruiters:
+            try:
+                logger.info("Reconnecting with %s", recruiter)
+                if self._recruiter_connect(url=recruiter) == True:
+                    successes += 1
+                    logger.info("Success reconnecting with %s, %d/%d",
+                                recruiter, successes, failures)
+                    self._save_recruiter(recruiter=recruiter)
+                else:
                     failures += 1
-                    logger.error("Error during reconnect: %d/%d, %s",
-                                 successes, failures, jobs[i]['recruiter'])
+                    logger.error("Failed reconnect with %s, %d/%d",
+                                 recruiter, successes, failures)
+            except Exception:
+                failures += 1
+                logger.error("Failed reconnect with %s, %d/%d",
+                             recruiter, successes, failures)
 
-    def _recruiter_connect(self, job: Job) -> bool:
-        if job.recruiter == '':
-            return True
-
-        self.browser.get(job.recruiter)
+    def _recruiter_connect(self, url: str) -> bool:
+        self.browser.get(url)
         time.sleep(random.uniform(3, 5))
 
         if (self._find_button(
