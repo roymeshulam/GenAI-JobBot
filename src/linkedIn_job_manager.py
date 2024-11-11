@@ -251,7 +251,7 @@ class LinkedInJobManager:
                         self._save_job(job=job, applied=True,
                                        connected=job.connected)
                     else:
-                        logger.warning("Failed reapply: %s", jobs[i]['link'])
+                        logger.error("Error during reapply: %s", jobs[i]['link'])
                 except Exception:
                     logger.error("Error during reapply: %s", jobs[i]['link'])
 
@@ -362,7 +362,7 @@ class LinkedInJobManager:
                           if parameters.get('date', {}).get(k)), "")
         url_parts.append("f_LF=f_AL")  # Easy Apply
         base_url = "&".join(url_parts)
-        full_url = f"?{base_url}{date_param}&sortBy=DD"
+        full_url = f"?{base_url}{date_param}"
         logger.debug("Base search URL constructed: %s", full_url)
         return full_url
 
