@@ -69,11 +69,15 @@ class LinkedInJobManager:
             conn = psycopg2.connect(self.database_url)
             cursor = conn.cursor()
             query = """
+            WITH DistinctRecruiters AS (
+                SELECT recruiter, MIN(id) AS min_id
+                FROM jobs
+                WHERE connected = FALSE
+                GROUP BY recruiter
+            )
             SELECT recruiter
-            FROM jobs
-            WHERE connected = FALSE
-            GROUP BY recruiter
-            ORDER BY COUNT(recruiter) DESC;
+            FROM DistinctRecruiters
+            ORDER BY min_id DESC;
             """
             cursor.execute(query)
             results = cursor.fetchall()
@@ -289,25 +293,24 @@ class LinkedInJobManager:
                     logger.error("Error during reapply: %s", jobs[i]['link'])
 
     def reconnect(self) -> None:
-        successes = 0
         failures = 0
+        successes = 0
         recruiters = self._load_recruiters()
         for recruiter in recruiters:
             try:
-                logger.info("Reconnecting with %s", recruiter)
                 if self._recruiter_connect(url=recruiter) == True:
                     successes += 1
-                    logger.info("Success reconnecting with %s, %d/%d",
-                                recruiter, successes, failures)
+                    logger.info("Success reconnecting with %s, %d/%d/%d",
+                                recruiter, successes, failures, len(recruiters)-successes)
                     self._save_recruiter(recruiter=recruiter)
                 else:
                     failures += 1
-                    logger.error("Failed reconnect with %s, %d/%d",
-                                 recruiter, successes, failures)
+                    logger.error("Failed reconnecting with %s, %d/%d/%d",
+                                 recruiter, successes, failures, len(recruiters)-successes)
             except Exception:
                 failures += 1
-                logger.error("Failed reconnect with %s, %d/%d",
-                             recruiter, successes, failures)
+                logger.error("Failed reconnecting with %s, %d/%d/%d",
+                             recruiter, successes, failures, len(recruiters)-successes)
 
     def _recruiter_connect(self, url: str) -> bool:
         self.browser.get(url)
