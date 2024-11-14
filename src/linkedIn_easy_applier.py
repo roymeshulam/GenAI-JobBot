@@ -11,7 +11,7 @@ from webbrowser import UnixBrowser
 import psycopg2
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, MoveTargetOutOfBoundsException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -186,11 +186,15 @@ class LinkedInEasyApplier:
             try:
                 see_more_button = self.browser.find_element(By.XPATH,
                                                             '//button[@aria-label="Click to see more description"]')
-                actions = ActionChains(self.browser)
-                actions.move_to_element(see_more_button).click().perform()
+                self.browser.execute_script(
+                    "arguments[0].scrollIntoView();", see_more_button)
+                ActionChains(self.browser).move_to_element(
+                    see_more_button).click().perform()
                 time.sleep(random.uniform(1, 3))
             except NoSuchElementException:
                 logger.debug("See more button not found, skipping")
+            except MoveTargetOutOfBoundsException:
+                logger.debug("Move target out of bounds exception, skipping")
 
             description = self.browser.find_element(
                 By.CLASS_NAME, 'jobs-description-content__text').text

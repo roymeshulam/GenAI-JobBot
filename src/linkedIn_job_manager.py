@@ -205,10 +205,10 @@ class LinkedInJobManager:
                                     return
 
                                 logger.info(f"Applying for job: {
-                                            job.title} at {job.company}")
+                                            job.title} at {job.company} {job.link}")
                                 self.easy_applier_component.job_apply(job)
                                 successful_applications += 1
-                                logger.info(f'Successfully applied to job {job.title} at {job.company}, applications = {
+                                logger.info(f'Successfully applied to job {job.title} at {job.company} {job.link}, applications = {
                                             successful_applications}/{failed_applications}')
                                 self._save_job(
                                     job=job, applied=True, connected=True if job.recruiter == '' else False)
