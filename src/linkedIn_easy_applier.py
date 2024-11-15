@@ -37,6 +37,9 @@ class LinkedInEasyApplier:
         self.database_url = parameters['database_url']
         self.questions = self._load_questions()
 
+    def set_browser(self, browser: UnixBrowser):
+        self.browser = browser
+        
     def _load_questions(self) -> List[dict]:
         try:
             conn = psycopg2.connect(self.database_url)

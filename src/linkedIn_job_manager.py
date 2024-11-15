@@ -36,6 +36,10 @@ class LinkedInJobManager:
         self.easy_applier_component = LinkedInEasyApplier(
             self.browser, self.resume_docx_path, self.gpt_answerer, parameters)
 
+    def set_browser(self, browser: UnixBrowser):
+        self.browser = browser
+        self.easy_applier_component.set_browser(browser=browser)
+
     def _load_jobs(self) -> List[dict]:
         try:
             conn = psycopg2.connect(self.database_url)

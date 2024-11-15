@@ -30,6 +30,9 @@ class LinkedInAuthenticator:
             logger.info("User is logged in.")
             return True
 
+    def set_browser(self, browser: UnixBrowser):
+        self.browser = browser
+
     def handle_login(self) -> bool:
         logger.info("Navigating to the LinkedIn login page...")
         self.browser.get("https://www.linkedin.com/login")

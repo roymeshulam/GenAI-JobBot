@@ -199,18 +199,19 @@ def main():
     with open(parameters['uploads']['resume_yaml_path'], "r", encoding='utf-8') as file:
         resume_yaml = file.read()
 
-    browser = get_browser()
-
     gpt_answerer = GPTAnswerer(model_name=model_name, openai_api_key=llm_api_key,
                                resume=Resume(resume_yaml), job_application_profile=JobApplicationProfile(resume_yaml))
+
+    browser = get_browser()
     authenticator = LinkedInAuthenticator(
         browser=browser, email=email, password=password)
     manager = LinkedInJobManager(browser=browser, parameters=parameters,
                                  gpt_answerer=gpt_answerer)
     logger.info("Starting apply process")
-    if authenticator.login() == True:
-        while True:
+    while True:
+        if authenticator.login() == True:
             manager.run()
+            browser.quit()
 
             logger.info("All done, halting.")
             total_seconds = 4 * 60 * 60
@@ -222,6 +223,10 @@ def main():
                             minutes} minutes, {seconds} seconds")
                 time.sleep(3600)
                 total_seconds -= 3600
+
+            browser = get_browser()
+            authenticator.set_browser(browser=browser)
+            manager.set_browser(browser=browser)
 
 
 if __name__ == "__main__":
