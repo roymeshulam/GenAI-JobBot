@@ -39,6 +39,7 @@ class LinkedInEasyApplier:
 
     def set_browser(self, browser: UnixBrowser):
         self.browser = browser
+        self.questions = self._load_questions()
         
     def _load_questions(self) -> List[dict]:
         try:
