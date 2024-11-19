@@ -18,9 +18,13 @@ cd GenAI-JobBot
 Create a virtual environment:
 ```
 python -m venv venv
+```
+Then,
+- On Unix, use
+```
 source venv/bin/activate
 ```
-On Windows, use
+- On Windows, use
 ```
 venv\Scripts\activate
 ```
