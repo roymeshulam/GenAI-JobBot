@@ -1,4 +1,4 @@
-# ﻿GenAI-JobBot
+# GenAI-JobBot
 Harnessing the power of Generative AI to automate job applications on LinkedIn.
 
 # Description
@@ -26,56 +26,44 @@ venv\Scripts\activate
 ```
 Install the required packages:
 ```
-python .\update_packages.py
+pip install -r requierments.txt
 ```
 
 # Configuration
-Create a .env file based on the template .env.template and fill in the relevant details:
+- Create a .env file based on the template .env.template and fill in the relevant details.
+
+- Save an updated resumse as resume.docx under the data folder.
+
+- Create a resume.yaml file based on the template resume.yaml.template and fill in the relevant details (you may try to upload your resume together with the yaml template to have it auto filled.).
+
+- Create a config.yaml based on the template provided and fill in the relevant details.
+
+- Setup a postgresql database and save the login details in the format of postgresql://... in the .env file
+
+- Create the jobs table:
 ```
-LANGTRACE_API_KEY=LANGTRACE_API_KEY
-LINKEDIN_EMAIL=LINKEDIN_EMAIL
-LINKEDIN_PASSWORD=LINKEDIN_PASSWORD
-LLM_API_KEY=LLM_API_KEY
-LLM_MODEL_NAME=gpt-4o-mini
-MODE=apply/reapply/reconnect/apply-langtrace/reapply-langtrace/reconnect-langtrace
-DATABASE_URL=URL
+CREATE TABLE jobs (
+    id SERIAL PRIMARY KEY,
+    company VARCHAR(255),
+    title VARCHAR(255),
+    link TEXT,
+    recruiter TEXT,
+    location VARCHAR(255),
+    applied BOOLEAN,
+    connected BOOLEAN
+);
 ```
-Create a config.yaml based on the template provided:
+
+- Create the questions table:
 ```
----
-experience_level:
-  internship: false
-  entry: false
-  associate: false
-  mid-senior level: true
-  director: true
-  executive: true
-job_types:
-  full-time: true
-  contract: false
-  part-time: false
-  temporary: false
-  internship: false
-  other: false
-  volunteer: false
-date:
-  all time: false
-  month: false
-  week: false
-  24 hours: true
-positions:
-  - Artificial Intelligence
-  - Data Scientist
-  - Quantitative
-  - Generative AI
-locations:
-  - United States
-  - New Zealand
-companies_blacklist:
-  - Crossover
-  - Jobot
+CREATE TABLE questions (
+    id SERIAL PRIMARY KEY,
+    type VARCHAR(50),
+    question VARCHAR(4096),
+    answer VARCHAR(4096)
+);
 ```
-Create 
+
 # Usage
 ```
 python main.py
