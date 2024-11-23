@@ -313,10 +313,9 @@ class LinkedInEasyApplier:
 
     def _process_form_element(self, element: WebElement, job) -> None:
         logger.debug("Processing form element")
+        self._fill_additional_questions(element)
         if self._is_upload_field(element):
             self._handle_upload_fields(job)
-        else:
-            self._fill_additional_questions(element)
 
     def _is_upload_field(self, element: WebElement) -> bool:
         is_upload = bool(element.find_elements(
