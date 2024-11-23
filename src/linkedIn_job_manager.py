@@ -180,14 +180,8 @@ class LinkedInJobManager:
                     break
 
                 try:
-                    job_results = self.browser.find_element(
-                        By.CLASS_NAME, "jobs-search-results-list")
-                    utils.scroll(self.browser, job_results, reverse=False)
-                    utils.scroll(self.browser, job_results, reverse=True)
-
-                    job_list_elements = self.browser.find_elements(By.CLASS_NAME, 'scaffold-layout__list-container')[
-                        0].find_elements(By.CLASS_NAME, 'jobs-search-results__list-item')
-
+                    job_list_elements = self.browser.find_elements(
+                        By.CLASS_NAME, 'jobs-search-results__list-item')
                     job_list = [Job(*self.extract_job_information_from_tile(job_element))
                                 for job_element in job_list_elements]
                     logger.info("Found %d jobs on this page", len(
@@ -402,6 +396,10 @@ class LinkedInJobManager:
         return full_url
 
     def extract_job_information_from_tile(self, job_tile):
+        self.browser.execute_script(
+            "arguments[0].scrollIntoView();", job_tile)
+        time.sleep(random.uniform(1,2))
+
         job_title, company, job_location, apply_method, link = "", "", "", "", ""
         try:
             job_title = job_tile.find_element(
