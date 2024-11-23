@@ -304,9 +304,9 @@ class LinkedInEasyApplier:
             return
 
         try:
-            pb4_elements = easy_apply_content.find_elements(
-                By.CLASS_NAME, 'pb4')
-            for element in pb4_elements:
+            elements = easy_apply_content.find_elements(
+                By.CLASS_NAME, 'ph5')
+            for element in elements:
                 self._process_form_element(element, job)
         except Exception as e:
             logger.error(f"Failed to find form elements: {e}")
