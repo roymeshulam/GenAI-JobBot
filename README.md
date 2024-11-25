@@ -30,7 +30,7 @@ venv\Scripts\activate
 ```
 Install the required packages:
 ```
-pip install -r requierments.txt
+pip install -r requirements.txt
 ```
 
 # Configuration
