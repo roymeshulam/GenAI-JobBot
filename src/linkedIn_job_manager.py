@@ -181,7 +181,7 @@ class LinkedInJobManager:
 
                 try:
                     job_list_elements = self.browser.find_elements(
-                        By.CLASS_NAME, 'jobs-search-results__list-item')
+                        By.XPATH, '//li[@data-occludable-job-id]')
                     job_list = [Job(*self.extract_job_information_from_tile(job_element))
                                 for job_element in job_list_elements]
                     logger.info("Found %d jobs on this page", len(
@@ -342,12 +342,12 @@ class LinkedInJobManager:
         actions = ActionChains(self.browser)
 
         button = self._find_button(
-            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--primary ember-view pvs-profile-actions__action") and contains(., "Connect")]')
+            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--primary ember-view") and contains(., "Connect")]')
         if button:
             return connect(self=self, button=button, actions=actions)
 
         button = self._find_button(
-            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--secondary ember-view pvs-profile-actions__action") and contains(., "Connect")]')
+            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--secondary ember-view") and contains(., "Connect")]')
         if button:
             return connect(self=self, button=button, actions=actions)
 
@@ -398,32 +398,32 @@ class LinkedInJobManager:
     def extract_job_information_from_tile(self, job_tile):
         self.browser.execute_script(
             "arguments[0].scrollIntoView();", job_tile)
-        time.sleep(random.uniform(1,2))
+        time.sleep(random.uniform(1, 2))
 
         job_title, company, job_location, apply_method, link = "", "", "", "", ""
         try:
             job_title = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-list__title').get_attribute('aria-label')
+                By.CLASS_NAME, 'job-card-list__title--link').get_attribute('aria-label')
         except NoSuchElementException:
             pass
         try:
             link = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-list__title').get_attribute('href').split('?')[0]
+                By.CLASS_NAME, 'job-card-list__title--link').get_attribute('href').split('?')[0]
         except NoSuchElementException:
             pass
         try:
             company = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-container__primary-description').text
+                By.CLASS_NAME, 'artdeco-entity-lockup__subtitle').text
         except NoSuchElementException:
             pass
         try:
             job_location = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-container__metadata-item').text
+                By.CLASS_NAME, 'job-card-container__metadata-wrapper').text
         except NoSuchElementException:
             pass
         try:
             apply_method = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-container__apply-method').text
+                By.XPATH, '//li[contains(@class, "job-card-container__footer-item") and contains(@class, "inline-flex")]').text
         except NoSuchElementException:
             pass
 

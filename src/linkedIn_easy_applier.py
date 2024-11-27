@@ -40,7 +40,7 @@ class LinkedInEasyApplier:
     def set_browser(self, browser: UnixBrowser):
         self.browser = browser
         self.questions = self._load_questions()
-        
+
     def _load_questions(self) -> List[dict]:
         try:
             conn = psycopg2.connect(self.database_url)
@@ -188,12 +188,14 @@ class LinkedInEasyApplier:
         logger.debug("Getting job description")
         try:
             try:
-                see_more_button = self.browser.find_element(By.XPATH,
-                                                            '//button[@aria-label="Click to see more description"]')
+                see_more_button = self.browser.find_element(
+                    By.XPATH, '//footer//button[@aria-label="Click to see more description"]')
+                # Scroll to the button
                 self.browser.execute_script(
                     "arguments[0].scrollIntoView();", see_more_button)
-                ActionChains(self.browser).move_to_element(
-                    see_more_button).click().perform()
+                # Click the button using JavaScript
+                self.browser.execute_script(
+                    "arguments[0].click();", see_more_button)
                 time.sleep(random.uniform(1, 3))
             except NoSuchElementException:
                 logger.debug("See more button not found, skipping")
@@ -201,7 +203,7 @@ class LinkedInEasyApplier:
                 logger.debug("Move target out of bounds exception, skipping")
 
             description = self.browser.find_element(
-                By.CLASS_NAME, 'jobs-description-content__text').text
+                By.CLASS_NAME, 'jobs-description-content').text
             logger.debug("Job description retrieved successfully")
             return description
         except Exception:
@@ -213,20 +215,19 @@ class LinkedInEasyApplier:
     def _get_job_recruiter(self):
         logger.debug("Getting job recruiter information")
         try:
-            hiring_team_section = WebDriverWait(self.browser, 10).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, '//h2[text()="Meet the hiring team"]'))
-            )
-            recruiter_elements = hiring_team_section.find_elements(By.XPATH,
-                                                                   './/following::a[contains(@href, "linkedin.com/in/")]')
-            if recruiter_elements:
-                recruiter_element = recruiter_elements[0]
-                recruiter = recruiter_element.get_attribute('href')
-                logger.debug(
-                    "Job recruiter link retrieved successfully: %s", recruiter)
-                return recruiter
-        except Exception:
-            pass
+            hiring_team_section = self.browser.find_element(
+                By.XPATH, '//h2[text()="Meet the hiring team"]')
+        except NoSuchElementException:
+            return ""
+
+        recruiter_elements = hiring_team_section.find_elements(By.XPATH,
+                                                               './/following::a[contains(@href, "linkedin.com/in/")]')
+        if recruiter_elements:
+            recruiter_element = recruiter_elements[0]
+            recruiter = recruiter_element.get_attribute('href')
+            logger.debug(
+                "Job recruiter link retrieved successfully: %s", recruiter)
+            return recruiter
         return ""
 
     def _scroll_page(self) -> None:
@@ -261,11 +262,11 @@ class LinkedInEasyApplier:
             return False
         else:
             progress_pre_click = self.browser.find_element(
-                By.XPATH, "//div[contains(@class, 'jobs-easy-apply-content')]").get_attribute("aria-label")
+                By.XPATH, '//div[contains(@aria-label, "Your job application progress")]').get_attribute("aria-label")
             next_button.click()
             time.sleep(random.uniform(3, 5))
             progress_post_click = self.browser.find_element(
-                By.XPATH, "//div[contains(@class, 'jobs-easy-apply-content')]").get_attribute("aria-label")
+                By.XPATH, '//div[contains(@aria-label, "Your job application progress")]').get_attribute("aria-label")
             if progress_pre_click == progress_post_click:
                 raise RuntimeError("Failed answering or file upload.")
             else:
@@ -298,14 +299,13 @@ class LinkedInEasyApplier:
         try:
             easy_apply_content = WebDriverWait(self.browser, random.uniform(5, 10)).until(
                 EC.presence_of_element_located(
-                    (By.CLASS_NAME, 'jobs-easy-apply-content'))
-            )
+                    (By.XPATH, '//div[contains(@aria-label, "Your job application progress")]')))
         except TimeoutException:
             return
 
         try:
             elements = easy_apply_content.find_elements(
-                By.CLASS_NAME, 'ph5')
+                By.XPATH, '//div[@class="ph5"]')
             for element in elements:
                 self._process_form_element(element, job)
         except Exception as e:
@@ -394,7 +394,7 @@ class LinkedInEasyApplier:
     def _fill_additional_questions(self, element: WebElement) -> None:
         logger.debug("Filling additional questions")
         form_sections = element.find_elements(
-            By.CLASS_NAME, 'jobs-easy-apply-form-section__grouping')
+            By.XPATH, '//div[@class="ph5"]/div/div')
         for section in form_sections:
             if self._handle_terms_of_service(section):
                 logger.debug("Handled terms of service")
@@ -413,7 +413,7 @@ class LinkedInEasyApplier:
         except NoSuchElementException:
             return False
 
-        if any(term in checkbox.text.lower() for term in ['terms of service', 'privacy policy', 'terms of use', 'i consent']):
+        if any(term in checkbox.text.lower() for term in ['confirmed', 'terms of service', 'privacy policy', 'terms of use', 'i consent']):
             checkbox.click()
             time.sleep(random.uniform(1, 3))
             logger.debug("Clicked terms of service checkbox")
@@ -423,15 +423,16 @@ class LinkedInEasyApplier:
     def _find_and_handle_radio_question(self, section: WebElement) -> bool:
         try:
             question = section.find_element(
-                By.CLASS_NAME, 'jobs-easy-apply-form-element')
+                By.CLASS_NAME, 'fb-dash-form-element')
         except NoSuchElementException:
             return False
 
         radios = question.find_elements(
-            By.CLASS_NAME, 'fb-text-selectable__option')
+            By.CLASS_NAME, 'fb-form-element__checkbox')
         if radios:
             question_text = section.text.lower()
-            options = [radio.text.lower() for radio in radios]
+            options = [radio.get_attribute(
+                'data-test-text-selectable-option__input').lower() for radio in radios]
 
             for item in self.questions:
                 if self._sanitize_text(question_text) == item['question'] and item['type'] == 'radio' and item['answer'] in options:
@@ -475,6 +476,9 @@ class LinkedInEasyApplier:
             except NoSuchElementException:
                 return False
 
+            if any(substring in question_text for substring in ['deselect resume', 'upload cover letter']):
+                return False
+
             is_numeric = self._is_numeric_field(text_field)
             question_type = 'numeric' if is_numeric else 'textbox'
 
@@ -497,7 +501,7 @@ class LinkedInEasyApplier:
     def _find_and_handle_dropdown_question(self, section: WebElement) -> bool:
         try:
             form_element = section.find_element(
-                By.CLASS_NAME, 'jobs-easy-apply-form-element')
+                By.CLASS_NAME, 'fb-dash-form-element')
         except NoSuchElementException:
             return False
 
@@ -553,11 +557,13 @@ class LinkedInEasyApplier:
 
     def _select_radio(self, radios: List[WebElement], answer: str) -> None:
         for radio in radios:
-            if answer == radio.text.lower():
-                radio.find_element(By.TAG_NAME, 'label').click()
+            if answer == radio.get_attribute('data-test-text-selectable-option__input').lower():
+                label_element = self.browser.find_element(
+                    By.XPATH, f'//label[@for="{radio.get_attribute("id")}"]')
+                label_element.click()
                 time.sleep(random.uniform(1, 3))
                 return
-        radios[-1].find_element(By.TAG_NAME, 'label').click()
+        radios[-1].click()
         time.sleep(random.uniform(1, 3))
 
     def _select_dropdown_option(self, select: Select, text: str) -> None:
