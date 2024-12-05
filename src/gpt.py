@@ -1,34 +1,32 @@
-import os
+"""
+Generative AI module
+"""
+
 import re
 import textwrap
 import time
 from typing import Dict, List
 
 import httpx
-from Levenshtein import distance
-
-from src.models import Job
-from src.models import Resume
-from src.models import JobApplicationProfile
-
-if 'langtrace' in os.getenv('MODE'):
-    from langtrace_python_sdk import langtrace
-    langtrace.init(api_key=os.getenv('LANGTRACE_API_KEY'))
-
 from langchain_core.messages.ai import AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+from Levenshtein import distance
 
-import src.strings as strings
+from src import strings
 from src.logging_config import logger
+from src.models import Job, JobApplicationProfile, Resume
 
 
 class LoggerChatModel:
+    """
+    Generative AI logging class
+    """
+
     def __init__(self, llm: ChatOpenAI):
         self.llm = llm
-        logger.debug(
-            "LoggerChatModel successfully initialized with LLM: %s", llm)
+        logger.debug("LoggerChatModel successfully initialized with LLM: %s", llm)
 
     def __call__(self, messages: List[Dict[str, str]]) -> str:
         logger.debug("Calling llm with messages: %s", messages)
@@ -47,36 +45,42 @@ class LoggerChatModel:
             except httpx.HTTPStatusError as e:
                 logger.error("HTTPStatusError encountered: %s", str(e))
                 if e.response.status_code == 429:
-                    retry_after = e.response.headers.get('retry-after')
-                    retry_after_ms = e.response.headers.get('retry-after-ms')
+                    retry_after = e.response.headers.get("retry-after")
+                    retry_after_ms = e.response.headers.get("retry-after-ms")
 
                     if retry_after:
                         wait_time = int(retry_after)
                         logger.warning(
                             "Rate limit exceeded. Waiting for %d seconds before retrying (extracted from 'retry-after' header)...",
-                            wait_time)
+                            wait_time,
+                        )
                         time.sleep(wait_time)
                     elif retry_after_ms:
                         wait_time = int(retry_after_ms) / 1000.0
                         logger.warning(
                             "Rate limit exceeded. Waiting for %f seconds before retrying (extracted from 'retry-after-ms' header)...",
-                            wait_time)
+                            wait_time,
+                        )
                         time.sleep(wait_time)
                     else:
                         wait_time = 30
                         logger.warning(
                             "'retry-after' header not found. Waiting for %d seconds before retrying (default)...",
-                            wait_time)
+                            wait_time,
+                        )
                         time.sleep(wait_time)
                 else:
-                    logger.error("HTTP error occurred with status code: %d, waiting 30 seconds before retrying",
-                                 e.response.status_code)
+                    logger.error(
+                        "HTTP error occurred with status code: %d, waiting 30 seconds before retrying",
+                        e.response.status_code,
+                    )
                     time.sleep(30)
 
             except Exception as e:
                 logger.error("Unexpected error occurred: %s", str(e))
                 logger.info(
-                    "Waiting for 30 seconds before retrying due to an unexpected error.")
+                    "Waiting for 30 seconds before retrying due to an unexpected error."
+                )
                 time.sleep(30)
                 continue
 
@@ -93,7 +97,9 @@ class LoggerChatModel:
                 "content": content,
                 "response_metadata": {
                     "model_name": response_metadata.get("model_name", ""),
-                    "system_fingerprint": response_metadata.get("system_fingerprint", ""),
+                    "system_fingerprint": response_metadata.get(
+                        "system_fingerprint", ""
+                    ),
                     "finish_reason": response_metadata.get("finish_reason", ""),
                     "logprobs": response_metadata.get("logprobs", None),
                 },
@@ -109,20 +115,26 @@ class LoggerChatModel:
             return parsed_result
 
         except KeyError as e:
-            logger.error(
-                "KeyError while parsing LLM result: missing key %s", str(e))
+            logger.error("KeyError while parsing LLM result: missing key %s", str(e))
             raise
 
         except Exception as e:
-            logger.error(
-                "Unexpected error while parsing LLM result: %s", str(e))
+            logger.error("Unexpected error while parsing LLM result: %s", str(e))
             raise
 
 
 class GPTAnswerer:
-    def __init__(self, model_name: str, openai_api_key: str, resume: Resume, job_application_profile: JobApplicationProfile):
-        self.llm_cheap = LoggerChatModel(ChatOpenAI(
-            openai_api_key=openai_api_key, model_name=model_name))
+    def __init__(
+        self,
+        model_name: str,
+        openai_api_key: str,
+        resume: Resume,
+        job_application_profile: JobApplicationProfile,
+    ):
+        self.llm_cheap = LoggerChatModel(
+            ChatOpenAI(openai_api_key=openai_api_key, model_name=model_name)
+        )
+        self.job = None
         self.resume = resume
         self.job_application_profile = job_application_profile
 
@@ -132,8 +144,7 @@ class GPTAnswerer:
 
     @staticmethod
     def find_best_match(text: str, options: list[str]) -> str:
-        logger.debug(
-            "Finding best match for text: '%s' in options: %s", text, options)
+        logger.debug("Finding best match for text: '%s' in options: %s", text, options)
         distances = [
             (option, distance(text.lower(), option.lower())) for option in options
         ]
@@ -159,23 +170,33 @@ class GPTAnswerer:
         logger.debug("Answering textual question: %s", question)
 
         chains = {
-            "personal_information": self._create_chain(strings.personal_information_template),
-            "self_identification": self._create_chain(strings.self_identification_template),
-            "legal_authorization": self._create_chain(strings.legal_authorization_template),
-            "work_preferences": self._create_chain(strings.work_preferences_template),
-            "education_details": self._create_chain(strings.education_details_template),
-            "experience_details": self._create_chain(strings.experience_details_template),
-            "projects": self._create_chain(strings.projects_template),
-            "availability": self._create_chain(strings.availability_template),
-            "salary_expectations": self._create_chain(strings.salary_expectations_template),
-            "certifications": self._create_chain(strings.certifications_template),
-            "languages": self._create_chain(strings.languages_template),
-            "interests": self._create_chain(strings.interests_template),
-            "cover_letter": self._create_chain(strings.coverletter_template),
+            "personal_information": self._create_chain(
+                strings.PERSONAL_INFORMATION_TEMPLATE
+            ),
+            "self_identification": self._create_chain(
+                strings.SELF_IDENTIFICATION_TEMPLATE
+            ),
+            "legal_authorization": self._create_chain(
+                strings.LEGAL_AUTHORIZATION_TEMPLATE
+            ),
+            "work_preferences": self._create_chain(strings.WORK_PREFERENCES_TEMPLATE),
+            "education_details": self._create_chain(strings.EDUCATION_DETAILS_TEMPLATE),
+            "experience_details": self._create_chain(
+                strings.EXPERIENCE_DETAILS_TEMPLATE
+            ),
+            "projects": self._create_chain(strings.PROJECTS_TEMPLATE),
+            "availability": self._create_chain(strings.AVAILABILITY_TEMPLATE),
+            "salary_expectations": self._create_chain(
+                strings.SALARY_EXPECTATIONS_TEMPLATE
+            ),
+            "certifications": self._create_chain(strings.CERTIFICATIONS_TEMPLATE),
+            "languages": self._create_chain(strings.LANGUAGES_TEMPLATE),
+            "interests": self._create_chain(strings.INTERESTS_TEMPLATE),
+            "cover_letter": self._create_chain(strings.COVERLETTER_TEMPLATE),
         }
 
-        if question == 'Write a cover letter':
-            section_name = 'cover_letter'
+        if question == "Write a cover letter":
+            section_name = "cover_letter"
         else:
             section_prompt = """
             You are assisting a bot designed to automatically apply for jobs on LinkedIn. The bot receives various questions about job applications and needs to determine the most relevant section of the resume to provide an accurate response.
@@ -271,51 +292,67 @@ class GPTAnswerer:
 
             match = re.search(
                 r"(Personal information|Self Identification|Legal Authorization|Work Preferences|Education Details|Experience Details|Projects|Availability|Salary Expectations|Certifications|Languages|Interests|Cover letter)",
-                output, re.IGNORECASE)
+                output,
+                re.IGNORECASE,
+            )
             if not match:
-                raise ValueError(
-                    "Could not extract section name from the response.")
+                raise ValueError("Could not extract section name from the response.")
             else:
                 section_name = match.group(1).lower().replace(" ", "_")
 
         if section_name == "cover_letter":
             chain = chains.get(section_name)
             output = chain.invoke(
-                {"resume": self.resume, "job_description": self.job_description})
+                {"resume": self.resume, "job_description": self.job_description}
+            )
             logger.debug("Cover letter generated: %s", output)
             return output
-        resume_section = getattr(self.resume, section_name, None) or getattr(self.job_application_profile, section_name,
-                                                                             None)
+        resume_section = getattr(self.resume, section_name, None) or getattr(
+            self.job_application_profile, section_name, None
+        )
         if resume_section is None:
             logger.error(
-                "Section '%s' not found in either resume or job_application_profile.", section_name)
-            raise ValueError(f"Section '{
-                             section_name}' not found in either resume or job_application_profile.")
+                "Section '%s' not found in either resume or job_application_profile.",
+                section_name,
+            )
+            raise ValueError(
+                f"Section '{
+                             section_name}' not found in either resume or job_application_profile."
+            )
         chain = chains.get(section_name)
         if chain is None:
             logger.error("Chain not defined for section '%s'", section_name)
             raise ValueError(f"Chain not defined for section '{section_name}'")
-        output = chain.invoke(
-            {"resume_section": resume_section, "question": question})
+        output = chain.invoke({"resume_section": resume_section, "question": question})
         logger.debug("Question answered: %s", output)
         return output
 
-    def answer_question_numeric(self, question: str, default_experience: int = 5) -> int:
+    def answer_question_numeric(
+        self, question: str, default_experience: int = 5
+    ) -> int:
         logger.debug("Answering numeric question: %s", question)
         func_template = self._preprocess_template_string(
-            strings.numeric_question_template)
+            strings.NUMERIC_QUESTION_TEMPLATE
+        )
         prompt = ChatPromptTemplate.from_template(func_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output_str = chain.invoke(
-            {"resume_educations": self.resume.education_details, "resume_jobs": self.resume.experience_details,
-             "resume_projects": self.resume.projects, "question": question})
+            {
+                "resume_educations": self.resume.education_details,
+                "resume_jobs": self.resume.experience_details,
+                "resume_projects": self.resume.projects,
+                "question": question,
+            }
+        )
         logger.debug("Raw output for numeric question: %s", output_str)
         try:
             output = self.extract_number_from_string(output_str)
             logger.debug("Extracted number: %d", output)
         except ValueError:
             logger.warning(
-                "Failed to extract number, using default experience: %d", default_experience)
+                "Failed to extract number, using default experience: %d",
+                default_experience,
+            )
             output = default_experience
         return output
 
@@ -331,12 +368,12 @@ class GPTAnswerer:
 
     def answer_question_from_options(self, question: str, options: list[str]) -> str:
         logger.debug("Answering question from options: %s", question)
-        func_template = self._preprocess_template_string(
-            strings.options_template)
+        func_template = self._preprocess_template_string(strings.OPTIONS_TEMPLATE)
         prompt = ChatPromptTemplate.from_template(func_template)
         chain = prompt | self.llm_cheap | StrOutputParser()
         output_str = chain.invoke(
-            {"resume": self.resume, "question": question, "options": options})
+            {"resume": self.resume, "question": question, "options": options}
+        )
         logger.debug("Raw output for options question: %s", output_str)
         best_option = self.find_best_match(output_str, options)
         logger.debug("Best option determined: %s", best_option)

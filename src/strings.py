@@ -1,5 +1,9 @@
+"""
+Constanst strings module for generative AI
+"""
+
 # Personal Information Template
-personal_information_template = """
+PERSONAL_INFORMATION_TEMPLATE = """
 Answer the following question based on the provided personal information.
 
 ## Rules
@@ -15,7 +19,7 @@ Question: {question}
 """
 
 # Self Identification Template
-self_identification_template = """
+SELF_IDENTIFICATION_TEMPLATE = """
 Answer the following question based on the provided self-identification details.
 
 ## Rules
@@ -31,7 +35,7 @@ Question: {question}
 """
 
 # Legal Authorization Template
-legal_authorization_template = """
+LEGAL_AUTHORIZATION_TEMPLATE = """
 Answer the following question based on the provided legal authorization details.
 
 ## Rules
@@ -47,7 +51,7 @@ Question: {question}
 """
 
 # Work Preferences Template
-work_preferences_template = """
+WORK_PREFERENCES_TEMPLATE = """
 Answer the following question based on the provided work preferences.
 
 ## Rules
@@ -63,7 +67,7 @@ Question: {question}
 """
 
 # Education Details Template
-education_details_template = """
+EDUCATION_DETAILS_TEMPLATE = """
 Answer the following question based on the provided education details.
 
 ## Rules
@@ -82,7 +86,7 @@ Question: {question}
 """
 
 # Experience Details Template
-experience_details_template = """
+EXPERIENCE_DETAILS_TEMPLATE = """
 Answer the following question based on the provided experience details.
 
 ## Rules
@@ -101,7 +105,7 @@ Question: {question}
 """
 
 # Projects Template
-projects_template = """
+PROJECTS_TEMPLATE = """
 Answer the following question based on the provided project details.
 
 ## Rules
@@ -119,7 +123,7 @@ Question: {question}
 """
 
 # Availability Template
-availability_template = """
+AVAILABILITY_TEMPLATE = """
 Answer the following question based on the provided availability details.
 
 ## Rules
@@ -135,9 +139,8 @@ I can start immediately.
 Availability: {resume_section}
 Question: {question}
 """
-
 # Salary Expectations Template
-salary_expectations_template = """
+SALARY_EXPECTATIONS_TEMPLATE = """
 Answer the following question based on the provided salary expectations.
 
 ## Rules
@@ -155,7 +158,7 @@ Question: {question}
 """
 
 # Certifications Template
-certifications_template = """
+CERTIFICATIONS_TEMPLATE = """
 Answer the following question based on the provided certifications.
 
 ## Rules
@@ -174,7 +177,7 @@ Question: {question}
 """
 
 # Languages Template
-languages_template = """
+LANGUAGES_TEMPLATE = """
 Answer the following question based on the provided language skills.
 
 ## Rules
@@ -193,7 +196,7 @@ Question: {question}
 """
 
 # Interests Template
-interests_template = """
+INTERESTS_TEMPLATE = """
 Answer the following question based on the provided interests.
 
 ## Rules
@@ -210,7 +213,7 @@ Interests: {resume_section}
 Question: {question}
 """
 
-summarize_prompt_template = """
+SUMMARIZE_PROMPT_TEMPLATE = """
 As a seasoned HR expert, your task is to identify and outline the key skills and requirements necessary for the position of this job. Use the provided job description as input to extract all relevant information. This will involve conducting a thorough analysis of the job's responsibilities and the industry standards. You should consider both the technical and soft skills needed to excel in this role. Additionally, specify any educational qualifications, certifications, or experiences that are essential. Your analysis should also reflect on the evolving nature of this role, considering future trends and how they might affect the required competencies.
 
 Rules:
@@ -238,7 +241,7 @@ This comprehensive overview will serve as a guideline for the recruitment proces
 
 # Job Description Summary"""
 
-coverletter_template = """
+COVERLETTER_TEMPLATE = """
 Compose a brief and impactful cover letter based on the provided job description and resume. The letter should be no longer than three paragraphs and should be written in a professional, yet conversational tone. Avoid using any placeholders, and ensure that the letter flows naturally and is tailored to the job.
 
 Analyze the job description to identify key qualifications and requirements. Introduce the candidate succinctly, aligning their career objectives with the role. Highlight relevant skills and experiences from the resume that directly match the job’s demands, using specific examples to illustrate these qualifications. Reference notable aspects of the company, such as its mission or values, that resonate with the candidate’s professional goals. Conclude with a strong statement of why the candidate is a good fit for the position, expressing a desire to discuss further.
@@ -260,7 +263,7 @@ Please write the cover letter in a way that directly addresses the job role and 
 ```
 """
 
-numeric_question_template = """
+NUMERIC_QUESTION_TEMPLATE = """
 Read the following resume carefully and answer the specific questions regarding the candidate's experience with a number of years. Follow these strategic guidelines when responding:
 
 1. **Related and Inferred Experience:**
@@ -342,7 +345,8 @@ When responding, consider all available information, including projects, work ex
 
 """
 
-options_template = """The following is a resume and an answered question about the resume, the answer is one of the options.
+OPTIONS_TEMPLATE = """The following is a resume and an answered question about the resume,
+the answer is one of the options.
 
 ## Rules
 - Never choose the default/placeholder option, examples are: 'Select an option', 'None', 'Choose from the options below', etc.
@@ -370,7 +374,7 @@ Options: [1-2, 3-5, 6-10, 10+]
 
 ## """
 
-try_to_fix_template = """\
+TRY_TO_FIX_TEMPLATE = """\
 The objective is to fix the text of a form input on a web page.
 
 ## Rules
@@ -392,7 +396,7 @@ The objective is to fix the text of a form input on a web page.
 ## Fixed Input
 """
 
-func_summarize_prompt_template = """
+FUNC_SUMMARIZE_PROMPT_TEMPLATE = """
         Following are two texts, one with placeholders and one without, the second text uses information from the first text to fill the placeholders.
         
         ## Rules
