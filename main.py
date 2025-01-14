@@ -214,7 +214,7 @@ def main():
             browser.quit()
 
             logger.info("All done, halting.")
-            total_seconds = 4 * 60 * 60
+            total_seconds = 24 * 60 * 60
             while (total_seconds > 0):
                 hours = int(total_seconds // 3600)
                 minutes = int((total_seconds % 3600) // 60)
