@@ -7,34 +7,36 @@ from webbrowser import UnixBrowser
 
 import psycopg2
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-
-from src.gpt import GPTAnswerer
-import src.utils as utils
-from src.models import Job
-from src.linkedIn_easy_applier import LinkedInEasyApplier
-from src.logging_config import logger
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+import src.utils as utils
+from src.gpt import GPTAnswerer
+from src.linkedIn_easy_applier import LinkedInEasyApplier
+from src.logging_config import logger
+from src.models import Job
 
 
 class LinkedInJobManager:
-    def __init__(self, browser: UnixBrowser, parameters: dict, gpt_answerer: GPTAnswerer):
+    def __init__(
+        self, browser: UnixBrowser, parameters: dict, gpt_answerer: GPTAnswerer
+    ):
         logger.debug("Initializing LinkedInJobManager")
         self.browser = browser
-        self.mode = parameters['mode']
-        self.positions = parameters['positions']
-        self.locations = parameters['locations']
-        self.resume_docx_path = Path(parameters['uploads']['resume_docx_path'])
-        self.database_url = parameters['database_url']
-        self.companies_blacklist = parameters['companies_blacklist']
+        self.mode = parameters["mode"]
+        self.positions = parameters["positions"]
+        self.locations = parameters["locations"]
+        self.resume_docx_path = Path(parameters["uploads"]["resume_docx_path"])
+        self.database_url = parameters["database_url"]
+        self.companies_blacklist = parameters["companies_blacklist"]
         self.gpt_answerer = gpt_answerer
         self.base_search_url = self.get_base_search_url(parameters)
         self.easy_applier_component = LinkedInEasyApplier(
-            self.browser, self.resume_docx_path, self.gpt_answerer, parameters)
+            self.browser, self.resume_docx_path, self.gpt_answerer, parameters
+        )
 
     def set_browser(self, browser: UnixBrowser):
         self.browser = browser
@@ -59,8 +61,8 @@ class LinkedInJobManager:
             else:
                 return []
         except Exception as e:
-            logger.error(f'Error loading jobs: {e}')
-            raise RuntimeError(f'Error loading jobs: {e}')
+            logger.error("Error loading jobs: %s", e)
+            raise RuntimeError(f"Error loading jobs: {e}") from e
         finally:
             if cursor:
                 cursor.close()
@@ -88,8 +90,8 @@ class LinkedInJobManager:
             unique_recruiters = [row[0] for row in results]
             return unique_recruiters if results else []
         except Exception as e:
-            logger.error(f'Error loading _load_recruiters: {e}')
-            raise RuntimeError(f'Error loading _load_recruiters: {e}')
+            logger.error("Error loading _load_recruiters: %s", e)
+            raise RuntimeError(f"Error loading _load_recruiters: {e}") from e
         finally:
             if cursor:
                 cursor.close()
@@ -97,8 +99,7 @@ class LinkedInJobManager:
                 conn.close()
 
     def _save_recruiter(self, recruiter: str):
-        logger.debug(
-            f"Updating recruiter status to connected for: {recruiter}")
+        logger.debug("Updating recruiter status to connected for: %s", recruiter)
         try:
             conn = psycopg2.connect(self.database_url)
             cursor = conn.cursor()
@@ -110,8 +111,8 @@ class LinkedInJobManager:
             cursor.execute(query, (recruiter,))
             conn.commit()
         except Exception as e:
-            logger.error(f"Error updating recruiter status: {e}")
-            raise RuntimeError(f"Error updating recruiter status: {e}")
+            logger.error("Error updating recruiter status: %s", e)
+            raise RuntimeError(f"Error updating recruiter status: {e}") from e
         finally:
             if cursor:
                 cursor.close()
@@ -131,12 +132,22 @@ class LinkedInJobManager:
                 applied = EXCLUDED.applied,
                 connected = EXCLUDED.connected;
             """
-            cursor.execute(insert_query, (job.company, job.title, job.link,
-                           job.recruiter, job.location, applied, connected))
+            cursor.execute(
+                insert_query,
+                (
+                    job.company,
+                    job.title,
+                    job.link,
+                    job.recruiter,
+                    job.location,
+                    applied,
+                    connected,
+                ),
+            )
             conn.commit()
         except Exception as e:
-            logger.error(f'Error saving job: {job} {e}')
-            raise RuntimeError(f'Error saving job: {job} {e}')
+            logger.error("Error saving job: %s %s", job, e)
+            raise RuntimeError(f"Error saving job: {job} {e}") from e
         finally:
             if cursor:
                 cursor.close()
@@ -144,15 +155,14 @@ class LinkedInJobManager:
                 conn.close()
 
     def run(self):
-        if ('reapply' in self.mode):
+        if "reapply" in self.mode:
             self.reapply()
-        elif ('reconnect' in self.mode):
+        elif "reconnect" in self.mode:
             self.reconnect()
         else:
             self.apply()
 
-        self.browser.get(
-            'https://www.linkedin.com/feed')
+        self.browser.get("https://www.linkedin.com/feed")
 
     def apply(self):
         logger.info("Starting job application process")
@@ -162,75 +172,126 @@ class LinkedInJobManager:
         failed_applications = 0
         for position, location in searches:
             job_page_number = -1
-            logger.info(f"Starting the search for position {
-                        position} in {location}.")
+            logger.info(
+                "Starting the search for position %s in %s.", position, location
+            )
             while True:
                 job_page_number += 1
-                url = "https://www.linkedin.com/jobs/search/"+self.base_search_url + \
-                    "&keywords="+position+"&location=" + \
-                    location+"&start="+str(job_page_number*25)
-                logger.info("Navigating to results page #%d at URL: %s",
-                            job_page_number, url)
+                url = (
+                    "https://www.linkedin.com/jobs/search/"
+                    + self.base_search_url
+                    + "&keywords="
+                    + position
+                    + "&location="
+                    + location
+                    + "&start="
+                    + str(job_page_number * 25)
+                )
+                logger.info(
+                    "Navigating to results page #%d at URL: %s", job_page_number, url
+                )
                 self.browser.get(url)
                 time.sleep(random.uniform(3, 5))
 
-                if (self._job_lefs() == False):
-                    logger.info(f'No jobs left, applications = {
-                        successful_applications}/{failed_applications}')
+                if self._job_lefs() is False:
+                    logger.info(
+                        "No jobs left, applications = %d/%d",
+                        successful_applications,
+                        failed_applications,
+                    )
                     break
 
                 try:
                     job_list_elements = self.browser.find_elements(
-                        By.XPATH, '//li[@data-occludable-job-id]')
-                    job_list = [Job(*self.extract_job_information_from_tile(job_element))
-                                for job_element in job_list_elements]
-                    logger.info("Found %d jobs on this page", len(
-                        [job for job in job_list if job.apply_method == 'Easy Apply']))
+                        By.XPATH, "//li[@data-occludable-job-id]"
+                    )
+                    job_list = [
+                        Job(*self.extract_job_information_from_tile(job_element))
+                        for job_element in job_list_elements
+                    ]
+                    logger.info(
+                        "Found %d jobs on this page",
+                        len(
+                            [
+                                job
+                                for job in job_list
+                                if job.apply_method in ["Easy Apply", "Promoted"]
+                            ]
+                        ),
+                    )
                     for job in job_list:
                         try:
-                            if job.apply_method == 'Easy Apply':
+                            if job.apply_method in ["Easy Apply", "Promoted"]:
                                 if job.company.strip() in self.companies_blacklist:
                                     logger.info(
-                                        f'{job.company} is blacklisted, skipping')
+                                        "%s is blacklisted, skipping", job.company
+                                    )
                                     continue
 
                                 self.browser.get(job.link)
                                 time.sleep(random.uniform(3, 5))
 
-                                if (self._daily_application_exceeded() == True):
-                                    logger.info(f'Daily applications exceeded, applications = {
-                                                successful_applications}/{failed_applications}')
+                                if self._daily_application_exceeded() is True:
+                                    logger.info(
+                                        "Daily applications exceeded, applications = %d/%d",
+                                        successful_applications,
+                                        failed_applications,
+                                    )
                                     return
 
-                                logger.info(f"Applying for job: {
-                                            job.title} at {job.company} {job.link}")
+                                logger.info(
+                                    "Applying for job: %s at %s %s",
+                                    job.title,
+                                    job.company,
+                                    job.link,
+                                )
                                 self.easy_applier_component.job_apply(job)
                                 successful_applications += 1
-                                logger.info(f'Successfully applied to job {job.title} at {job.company} {job.link}, applications = {
-                                            successful_applications}/{failed_applications}')
+                                logger.info(
+                                    "Successfully applied to job %s at %s %s, applications = %d/%d",
+                                    job.title,
+                                    job.company,
+                                    job.link,
+                                    successful_applications,
+                                    failed_applications,
+                                )
                                 self._save_job(
-                                    job=job, applied=True, connected=True if job.recruiter == '' else False)
+                                    job=job,
+                                    applied=True,
+                                    connected=True if job.recruiter == "" else False,
+                                )
                         except Exception:
                             failed_applications += 1
-                            logger.info(f'Failed applying to job {job.title} at {job.company}, applications = {
-                                successful_applications}/{failed_applications}')
+                            logger.info(
+                                "Failed applying to job %s at %s, applications = %d/%d",
+                                job.title,
+                                job.company,
+                                successful_applications,
+                                failed_applications,
+                            )
                             self._save_job(
-                                job, applied=False, connected=True if job.recruiter == '' else False)
+                                job,
+                                applied=False,
+                                connected=True if job.recruiter == "" else False,
+                            )
                             continue
                 except Exception as e:
                     logger.error("Error during job application: %s", e)
                     continue
-                logger.info(f'Applying to jobs on this page has been completed, applications = {
-                    successful_applications}/{failed_applications}')
+                logger.info(
+                    "Applying to jobs on this page has been completed, applications = %d/%d",
+                    successful_applications,
+                    failed_applications,
+                )
                 time.sleep(random.uniform(5, 10))
 
     def _job_lefs(self) -> bool:
         try:
             no_jobs_element = self.browser.find_element(
-                By.CLASS_NAME, 'jobs-search-no-results-banner')
-            if no_jobs_element and 'No matching jobs found' in no_jobs_element.text:
-                logger.info(
-                    "No matching jobs found.")
+                By.CLASS_NAME, "jobs-search-no-results-banner"
+            )
+            if no_jobs_element and "No matching jobs found" in no_jobs_element.text:
+                logger.info("No matching jobs found.")
                 return False
         except NoSuchElementException:
             pass
@@ -239,29 +300,33 @@ class LinkedInJobManager:
     def _daily_application_exceeded(self) -> bool:
         try:
             daily_applications_exceeded_element = self.browser.find_element(
-                By.CLASS_NAME, 'artdeco-inline-feedback--error')
-            if daily_applications_exceeded_element.text in ['The application feature is temporarily unavailable',
-                                                            'You’ve reached the Easy Apply application limit for today. Save this job and come back tomorrow to continue applying.']:
+                By.CLASS_NAME, "artdeco-inline-feedback--error"
+            )
+            if daily_applications_exceeded_element.text in [
+                "The application feature is temporarily unavailable",
+                "You’ve reached the Easy Apply application limit for today. Save this job and come back tomorrow to continue applying.",
+            ]:
                 return True
         except NoSuchElementException:
             pass
         return False
 
     def _find_button(self, xpath: str) -> Optional[WebElement]:
-        logger.debug('Searching button')
+        logger.debug("Searching button")
 
-        buttons = self.browser.find_elements(
-            By.XPATH, xpath)
+        buttons = self.browser.find_elements(By.XPATH, xpath)
         if buttons:
             for button in buttons:
                 try:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
-                        EC.visibility_of(button))
+                        EC.visibility_of(button)
+                    )
                 except Exception:
                     continue
                 try:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
-                        EC.element_to_be_clickable(button))
+                        EC.element_to_be_clickable(button)
+                    )
                     return button
                 except Exception:
                     pass
@@ -270,25 +335,21 @@ class LinkedInJobManager:
     def reapply(self) -> None:
         jobs = self._load_jobs()
         for i in range(len(jobs)):
-            if jobs[i]['applied'] == False:
+            if jobs[i]["applied"] == False:
                 try:
                     job = Job(**jobs[i])
                     if job.company.strip() in self.companies_blacklist:
-                        logger.info(
-                            f'{job.company} is blacklisted, skipping')
+                        logger.info("%s is blacklisted, skipping", job.company)
                         continue
 
-                    logger.info(f"Applying for job: {
-                        job.title} at {job.company}")
+                    logger.info("Applying for job: %s at %s", job.title, job.company)
                     if self.easy_applier_component.job_apply(job=job) == True:
                         logger.info("Reaplied succeed")
-                        self._save_job(job=job, applied=True,
-                                       connected=job.connected)
+                        self._save_job(job=job, applied=True, connected=job.connected)
                     else:
-                        logger.error("Error during reapply: %s",
-                                     jobs[i]['link'])
+                        logger.error("Error during reapply: %s", jobs[i]["link"])
                 except Exception:
-                    logger.error("Error during reapply: %s", jobs[i]['link'])
+                    logger.error("Error during reapply: %s", jobs[i]["link"])
 
     def reconnect(self) -> None:
         failures = 0
@@ -298,24 +359,40 @@ class LinkedInJobManager:
             try:
                 if self._recruiter_connect(url=recruiter) == True:
                     successes += 1
-                    logger.info("Success reconnecting with %s, %d/%d/%d",
-                                recruiter, successes, failures, len(recruiters)-successes)
+                    logger.info(
+                        "Success reconnecting with %s, %d/%d/%d",
+                        recruiter,
+                        successes,
+                        failures,
+                        len(recruiters) - successes,
+                    )
                     self._save_recruiter(recruiter=recruiter)
                 else:
                     failures += 1
-                    logger.error("Failed reconnecting with %s, %d/%d/%d",
-                                 recruiter, successes, failures, len(recruiters)-successes)
+                    logger.error(
+                        "Failed reconnecting with %s, %d/%d/%d",
+                        recruiter,
+                        successes,
+                        failures,
+                        len(recruiters) - successes,
+                    )
             except Exception:
                 failures += 1
-                logger.error("Failed reconnecting with %s, %d/%d/%d",
-                             recruiter, successes, failures, len(recruiters)-successes)
+                logger.error(
+                    "Failed reconnecting with %s, %d/%d/%d",
+                    recruiter,
+                    successes,
+                    failures,
+                    len(recruiters) - successes,
+                )
 
     def _recruiter_connect(self, url: str) -> bool:
         self.browser.get(url)
         time.sleep(random.uniform(3, 5))
 
-        if (self._find_button(
-                '//button[contains(@class, "artdeco-button--secondary") and contains(., "Pending")]')):
+        if self._find_button(
+            '//button[contains(@class, "artdeco-button--secondary") and contains(., "Pending")]'
+        ):
             return True
 
         self._scroll_page()
@@ -324,16 +401,21 @@ class LinkedInJobManager:
             actions.move_to_element(button).click().perform()
             time.sleep(random.uniform(1, 3))
 
-            actions.move_to_element(self._find_button(
-                '//button[@aria-label="Send without a note"]')).click().perform()
+            actions.move_to_element(
+                self._find_button('//button[@aria-label="Send without a note"]')
+            ).click().perform()
             time.sleep(random.uniform(1, 3))
 
             try:
                 weekly_connections_exceeded_element = self.browser.find_element(
-                    By.CLASS_NAME, 'ip-fuse-limit-alert__header')
-                if weekly_connections_exceeded_element and 'reached the weekly invitation limit' in weekly_connections_exceeded_element.text:
-                    logger.info(
-                        "Weekly invitation limit reached.")
+                    By.CLASS_NAME, "ip-fuse-limit-alert__header"
+                )
+                if (
+                    weekly_connections_exceeded_element
+                    and "reached the weekly invitation limit"
+                    in weekly_connections_exceeded_element.text
+                ):
+                    logger.info("Weekly invitation limit reached.")
                     return False
             except NoSuchElementException:
                 pass
@@ -342,25 +424,28 @@ class LinkedInJobManager:
         actions = ActionChains(self.browser)
 
         button = self._find_button(
-            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--primary ember-view") and contains(., "Connect")]')
+            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--primary ember-view") and contains(., "Connect")]'
+        )
         if button:
             return connect(self=self, button=button, actions=actions)
 
         button = self._find_button(
-            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--secondary ember-view") and contains(., "Connect")]')
+            '//button[contains(@class, "artdeco-button artdeco-button--2 artdeco-button--secondary ember-view") and contains(., "Connect")]'
+        )
         if button:
             return connect(self=self, button=button, actions=actions)
 
-        actions.move_to_element(self._find_button(
-            '//button[@aria-label="More actions"]')).click().perform()
+        actions.move_to_element(
+            self._find_button('//button[@aria-label="More actions"]')
+        ).click().perform()
         time.sleep(random.uniform(1, 3))
 
-        if (self._find_button(
-                '//div[@role="button" and contains(., "Remove Connection")]')):
+        if self._find_button(
+            '//div[@role="button" and contains(., "Remove Connection")]'
+        ):
             return True
 
-        button = self._find_button(
-            '//div[@role="button" and contains(., "Connect")]')
+        button = self._find_button('//div[@role="button" and contains(., "Connect")]')
         if button:
             return connect(self=self, button=button, actions=actions)
 
@@ -369,26 +454,37 @@ class LinkedInJobManager:
     def get_base_search_url(self, parameters: dict) -> str:
         logger.debug("Constructing base search URL")
         url_parts = []
-        experience_levels = [str(
-            i + 1) for i, v in enumerate(parameters.get('experience_level', {}).values()) if v]
+        experience_levels = [
+            str(i + 1)
+            for i, v in enumerate(parameters.get("experience_level", {}).values())
+            if v
+        ]
         if experience_levels:
             url_parts.append(f"f_E={','.join(experience_levels)}")
         work_types = [
-            str(i + 1) for i, v in enumerate(parameters.get('work_types', {}).values()) if v]
+            str(i + 1)
+            for i, v in enumerate(parameters.get("work_types", {}).values())
+            if v
+        ]
         if work_types:
             url_parts.append(f"f_WT={','.join(work_types)}")
-        job_types = [key[0].upper() for key, value in parameters.get(
-            'job_types', {}).items() if value]
+        job_types = [
+            key[0].upper()
+            for key, value in parameters.get("job_types", {}).items()
+            if value
+        ]
         if job_types:
             url_parts.append(f"f_JT={','.join(job_types)}")
         date_mapping = {
             "all time": "",
             "month": "&f_TPR=r2592000",
             "week": "&f_TPR=r604800",
-            "24 hours": "&f_TPR=r86400"
+            "24 hours": "&f_TPR=r86400",
         }
-        date_param = next((v for k, v in date_mapping.items()
-                          if parameters.get('date', {}).get(k)), "")
+        date_param = next(
+            (v for k, v in date_mapping.items() if parameters.get("date", {}).get(k)),
+            "",
+        )
         url_parts.append("f_LF=f_AL")  # Easy Apply
         base_url = "&".join(url_parts)
         full_url = f"?{base_url}{date_param}"
@@ -396,43 +492,56 @@ class LinkedInJobManager:
         return full_url
 
     def extract_job_information_from_tile(self, job_tile):
-        self.browser.execute_script(
-            "arguments[0].scrollIntoView();", job_tile)
+        self.browser.execute_script("arguments[0].scrollIntoView();", job_tile)
         time.sleep(random.uniform(1, 2))
 
         job_title, company, job_location, apply_method, link = "", "", "", "", ""
         try:
             job_title = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-list__title--link').get_attribute('aria-label')
+                By.CLASS_NAME, "job-card-list__title--link"
+            ).get_attribute("aria-label")
         except NoSuchElementException:
             pass
         try:
-            link = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-list__title--link').get_attribute('href').split('?')[0]
+            link = (
+                job_tile.find_element(By.CLASS_NAME, "job-card-list__title--link")
+                .get_attribute("href")
+                .split("?")[0]
+            )
         except NoSuchElementException:
             pass
         try:
             company = job_tile.find_element(
-                By.CLASS_NAME, 'artdeco-entity-lockup__subtitle').text
+                By.CLASS_NAME, "artdeco-entity-lockup__subtitle"
+            ).text
         except NoSuchElementException:
             pass
         try:
             job_location = job_tile.find_element(
-                By.CLASS_NAME, 'job-card-container__metadata-wrapper').text
+                By.CLASS_NAME, "job-card-container__metadata-wrapper"
+            ).text
         except NoSuchElementException:
             pass
         try:
             apply_method = job_tile.find_element(
-                By.XPATH, '//li[contains(@class, "job-card-container__footer-item") and contains(@class, "inline-flex")]').text
+                By.XPATH,
+                '//li[contains(@class, "job-card-container__footer-item") and contains(@class, "inline-flex")]',
+            ).text
         except NoSuchElementException:
             pass
 
-        logger.debug("Job inofrmation: title %s, company %s, location %s, link %s, apply method %s",
-                     job_title, company, job_location, link, apply_method)
+        logger.debug(
+            "Job inofrmation: title %s, company %s, location %s, link %s, apply method %s",
+            job_title,
+            company,
+            job_location,
+            link,
+            apply_method,
+        )
         return job_title, company, job_location, link, apply_method
 
     def _scroll_page(self) -> None:
         logger.debug("Scrolling the page")
-        scrollable_element = self.browser.find_element(By.TAG_NAME, 'html')
+        scrollable_element = self.browser.find_element(By.TAG_NAME, "html")
         utils.scroll(self.browser, scrollable_element, reverse=False)
         utils.scroll(self.browser, scrollable_element, reverse=True)
