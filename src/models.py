@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional
 import yaml
 from pydantic import EmailStr, HttpUrl
 
@@ -123,23 +123,25 @@ class Resume:
     def __init__(self, yaml_str: str):
         data = yaml.safe_load(yaml_str)
         self.personal_information = PersonalInformation(
-            **data.get("personal_information", {}))
-        self.education_details = [EducationDetails(
-            **edu) for edu in data.get("education_details", [])]
-        self.experience_details = [ExperienceDetails(
-            **exp) for exp in data.get("experience_details", [])]
+            **data.get("personal_information", {})
+        )
+        self.education_details = [
+            EducationDetails(**edu) for edu in data.get("education_details", [])
+        ]
+        self.experience_details = [
+            ExperienceDetails(**exp) for exp in data.get("experience_details", [])
+        ]
         self.projects = [Project(**proj) for proj in data.get("projects", [])]
-        self.achievements = [Achievement(**ach)
-                             for ach in data.get("achievements", [])]
-        self.certifications = [Certifications(
-            **cert) for cert in data.get("certifications", [])]
-        self.languages = [Language(**lang)
-                          for lang in data.get("languages", [])]
+        self.achievements = [Achievement(**ach) for ach in data.get("achievements", [])]
+        self.certifications = [
+            Certifications(**cert) for cert in data.get("certifications", [])
+        ]
+        self.languages = [Language(**lang) for lang in data.get("languages", [])]
         self.interests = data.get("interests", [])
         self.self_identification = SelfIdentification(
-            **data.get("self_identification", {}))
-        self.legal_authorization = LegalAuthorization(
-            **data.get("legal_authorization"))
+            **data.get("self_identification", {})
+        )
+        self.legal_authorization = LegalAuthorization(**data.get("legal_authorization"))
 
 
 @dataclass
@@ -172,11 +174,8 @@ class JobApplicationProfile:
 
     def __init__(self, yaml_str: str):
         data = yaml.safe_load(yaml_str)
-        self.self_identification = SelfIdentification(
-            **data['self_identification'])
-        self.legal_authorization = LegalAuthorization(
-            **data['legal_authorization'])
-        self.work_preferences = WorkPreferences(**data['work_preferences'])
-        self.availability = Availability(**data['availability'])
-        self.salary_expectations = SalaryExpectations(
-            **data['salary_expectations'])
+        self.self_identification = SelfIdentification(**data["self_identification"])
+        self.legal_authorization = LegalAuthorization(**data["legal_authorization"])
+        self.work_preferences = WorkPreferences(**data["work_preferences"])
+        self.availability = Availability(**data["availability"])
+        self.salary_expectations = SalaryExpectations(**data["salary_expectations"])

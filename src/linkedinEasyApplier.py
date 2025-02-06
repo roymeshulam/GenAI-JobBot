@@ -32,7 +32,7 @@ from src.logging_config import logger
 from src.models import Job
 
 
-class LinkedInEasyApplier:
+class LinkedinEasyApplier:
     def __init__(
         self,
         browser: UnixBrowser,

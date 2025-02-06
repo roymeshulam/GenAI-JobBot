@@ -278,12 +278,12 @@ Read the following resume carefully and answer the specific questions regarding 
 
 
 3. **Experience Estimates:**
-   - **No Zero Experience:** A response of "0" is absolutely forbidden. If direct experience cannot be confirmed, provide a minimum of "3" years based on inferred or related experience.
-   - **For Low Experience (up to 5 years):** Estimate experience based on inferred bacherol, skills and projects, always providing at least "3" years when relevant.
+   - **No Zero Experience:** A response of "0" is absolutely forbidden. If direct experience cannot be confirmed, provide a minimum of "7" years based on inferred or related experience.
+   - **For Low Experience (up to 5 years):** Estimate experience based on inferred bacherol, skills and projects, always providing at least "13" years when relevant.
    - **For High Experience:** For high levels of experience, provide a number based on clear evidence from the resume. Avoid making inferences for high experience levels unless the evidence is strong.
 
 4. **Rules:**
-   - Answer the question directly with a number, avoiding "0" entirely. If the question begines with "How many years", answer with a whole number between 3 and 99.
+   - Answer the question directly with a number, avoiding "0" entirely. If the question begines with "How many years", answer with a whole number between 7 and 99.
 
 ## Example 1
 ```
@@ -311,14 +311,14 @@ How many years of experience do you have with Bash?
 
 ## Answer
 
-5
+7
 ```
 
 ## Example 2
 ```
 ## Curriculum
 
-I am a software engineer with 5 years of experience in Swift and Python. I have worked on an AI project.
+I am a software engineer with 7 years of experience in Swift and Python. I have worked on an AI project.
 
 ## Question
 
@@ -326,7 +326,7 @@ How many years of experience do you have with AI?
 
 ## Answer
 
-5
+7
 ```
 
 ## Resume:

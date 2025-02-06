@@ -15,12 +15,60 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import src.utils as utils
 from src.gpt import GPTAnswerer
-from src.linkedIn_easy_applier import LinkedInEasyApplier
+from src.linkedinEasyApplier import LinkedinEasyApplier
 from src.logging_config import logger
 from src.models import Job
 
 
-class LinkedInJobManager:
+class LinkedinJobManager:
+    """
+    Manages job applications and recruiter connections on LinkedIn.
+    Attributes:
+        browser (UnixBrowser): The browser instance used for web automation.
+        mode (str): The mode of operation (e.g., "reapply", "reconnect").
+        positions (list): List of job positions to search for.
+        locations (list): List of locations to search for jobs.
+        resume_docx_path (Path): Path to the resume document.
+        database_url (str): URL of the database for storing job and recruiter information.
+        companies_blacklist (list): List of blacklisted companies.
+        gpt_answerer (GPTAnswerer): Instance of GPTAnswerer for generating responses.
+        base_search_url (str): Base URL for LinkedIn job search.
+        easy_applier_component (LinkedInEasyApplier): Component for applying to jobs easily.
+    Methods:
+        set_browser(browser: UnixBrowser):
+            Sets the browser instance for the manager and its components.
+        _load_jobs() -> List[dict]:
+            Loads jobs from the database that have not been applied to.
+        _load_recruiters() -> List[str]:
+            Loads unique recruiter URLs from the database.
+        _save_recruiter(recruiter: str):
+            Updates the recruiter status to connected in the database.
+        _save_job(job: Job, applied: bool, connected: bool) -> None:
+            Saves job information to the database.
+        run():
+            Runs the job application or recruiter connection process based on the mode.
+        apply():
+            Applies to jobs based on the specified positions and locations.
+        _job_lefs() -> bool:
+            Checks if there are no jobs left to apply to on the current page.
+        _daily_application_exceeded() -> bool:
+            Checks if the daily application limit has been exceeded.
+        _find_button(xpath: str) -> Optional[WebElement]:
+            Finds a button on the page using the specified XPath.
+        reapply() -> None:
+            Reapplies to jobs that were not successfully applied to previously.
+        reconnect() -> None:
+            Reconnects with recruiters that have not been connected with previously.
+        _recruiter_connect(url: str) -> bool:
+            Connects with a recruiter using the specified URL.
+        get_base_search_url(parameters: dict) -> str:
+            Constructs the base search URL for LinkedIn job search.
+        extract_job_information_from_tile(job_tile):
+            Extracts job information from a job tile element.
+        _scroll_page() -> None:
+            Scrolls the page to load more content.
+    """
+
     def __init__(
         self, browser: UnixBrowser, parameters: dict, gpt_answerer: GPTAnswerer
     ):
@@ -34,7 +82,7 @@ class LinkedInJobManager:
         self.companies_blacklist = parameters["companies_blacklist"]
         self.gpt_answerer = gpt_answerer
         self.base_search_url = self.get_base_search_url(parameters)
-        self.easy_applier_component = LinkedInEasyApplier(
+        self.easy_applier_component = LinkedinEasyApplier(
             self.browser, self.resume_docx_path, self.gpt_answerer, parameters
         )
 
@@ -155,14 +203,16 @@ class LinkedInJobManager:
                 conn.close()
 
     def run(self):
+        """
+        Executes the job application or recruiter connection process based on the mode.
+        """
         if "reapply" in self.mode:
             self.reapply()
         elif "reconnect" in self.mode:
             self.reconnect()
         else:
             self.apply()
-
-        self.browser.get("https://www.linkedin.com/feed")
+            self.reconnect(10)
 
     def apply(self):
         logger.info("Starting job application process")
@@ -176,6 +226,10 @@ class LinkedInJobManager:
                 "Starting the search for position %s in %s.", position, location
             )
             while True:
+                if successful_applications > 100:
+                    logger.info("Daily applications target reached.")
+                    return
+
                 job_page_number += 1
                 url = (
                     "https://www.linkedin.com/jobs/search/"
@@ -351,13 +405,22 @@ class LinkedInJobManager:
                 except Exception:
                     logger.error("Error during reapply: %s", jobs[i]["link"])
 
-    def reconnect(self) -> None:
+    def reconnect(self, target: int = 0) -> None:
+        """
+        Reconnects with recruiters that have not been connected with previously.
+
+        Args:
+            target (int): The target number of successful connections. Defaults to 0.
+        """
         failures = 0
         successes = 0
         recruiters = self._load_recruiters()
         for recruiter in recruiters:
+            if target and successes > target:
+                logger.info("Successful connections target reached.")
+                break
             try:
-                if self._recruiter_connect(url=recruiter) == True:
+                if self._recruiter_connect(url=recruiter) is True:
                     successes += 1
                     logger.info(
                         "Success reconnecting with %s, %d/%d/%d",

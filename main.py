@@ -13,8 +13,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 from src.gpt import GPTAnswerer
-from src.linkedIn_authenticator import LinkedInAuthenticator
-from src.linkedIn_job_manager import LinkedInJobManager
+from src.linkedinAuthenticator import LinkedinAuthenticator
+from src.linkedinJobManager import LinkedinJobManager
 from src.logging_config import logger
 from src.models import JobApplicationProfile, Resume
 
@@ -242,10 +242,10 @@ def main():
     )
 
     browser = get_browser()
-    authenticator = LinkedInAuthenticator(
+    authenticator = LinkedinAuthenticator(
         browser=browser, email=email, password=password
     )
-    manager = LinkedInJobManager(
+    manager = LinkedinJobManager(
         browser=browser, parameters=parameters, gpt_answerer=gpt_answerer
     )
     logger.info("Starting apply process")
