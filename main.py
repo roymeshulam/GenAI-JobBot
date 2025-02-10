@@ -1,3 +1,7 @@
+"""
+Main entry pojnt for the LinkedIn job application bot.
+"""
+
 import os
 import time
 from pathlib import Path
@@ -13,8 +17,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 from src.gpt import GPTAnswerer
-from src.linkedinAuthenticator import LinkedinAuthenticator
-from src.linkedinJobManager import LinkedinJobManager
+from src.linkedin_authenticator import LinkedinAuthenticator
+from src.linkedin_job_manager import LinkedinJobManager
 from src.logging_config import logger
 from src.models import JobApplicationProfile, Resume
 
@@ -22,6 +26,18 @@ load_dotenv(override=True)
 
 
 def validate_data_folder(data_folder: Path) -> tuple:
+    """
+    Validates the existence of the data folder and required files within it.
+
+    Args:
+        data_folder (Path): The path to the data folder.
+
+    Returns:
+        tuple: Paths to the resume.docx, config.yaml, and resume.yaml files.
+
+    Raises:
+        FileNotFoundError: If the data folder or any required file is missing.
+    """
     if not data_folder.exists() or not data_folder.is_dir():
         raise FileNotFoundError(f"Data folder not found: {data_folder}")
 
@@ -43,6 +59,18 @@ def validate_data_folder(data_folder: Path) -> tuple:
 
 
 def validate_yaml_file(yaml_path: Path) -> dict:
+    """
+    Validates and loads the content of a YAML file.
+
+    Args:
+        yaml_path (Path): The path to the YAML file.
+
+    Returns:
+        dict: The content of the YAML file as a dictionary.
+
+    Raises:
+        yaml.YAMLError: If there is an error in parsing the YAML file.
+    """
     with open(yaml_path, "r", encoding="utf-8") as stream:
         return yaml.safe_load(stream)
 
@@ -50,6 +78,18 @@ def validate_yaml_file(yaml_path: Path) -> dict:
 def validate_boolean_fields(
     fields: list, parameters: dict, category: str, config_yaml_path: Path
 ):
+    """
+    Validates that specified fields in a category of parameters are boolean.
+
+    Args:
+        fields (list): The list of fields to validate.
+        parameters (dict): The parameters dictionary.
+        category (str): The category to validate.
+        config_yaml_path (Path): The path to the configuration YAML file.
+
+    Raises:
+        ValueError: If any field is not boolean or is invalid.
+    """
     for key in parameters[category].keys():
         if key not in fields:
             raise ValueError(
@@ -66,6 +106,17 @@ def validate_boolean_fields(
 
 
 def validate_string_list(parameters: dict, category: str, config_yaml_path: Path):
+    """
+    Validates that all items in the specified category of parameters are strings.
+
+    Args:
+        parameters (dict): The parameters dictionary.
+        category (str): The category to validate.
+        config_yaml_path (Path): The path to the configuration YAML file.
+
+    Raises:
+        ValueError: If any item in the category is not a string.
+    """
     if not all(isinstance(item, str) for item in parameters[category]):
         raise ValueError(
             f"'{category}' must be a list of strings in config file {
@@ -74,6 +125,18 @@ def validate_string_list(parameters: dict, category: str, config_yaml_path: Path
 
 
 def validate_config(config_yaml_path: Path) -> dict:
+    """
+    Validates the configuration file and returns the parameters.
+
+    Args:
+        config_yaml_path (Path): The path to the configuration YAML file.
+
+    Returns:
+        dict: The validated parameters from the configuration file.
+
+    Raises:
+        ValueError: If any required key is missing or has an invalid type.
+    """
     parameters = validate_yaml_file(config_yaml_path)
 
     required_keys = {
@@ -137,6 +200,15 @@ def validate_config(config_yaml_path: Path) -> dict:
 
 
 def get_browser():
+    """
+    Sets up and returns a web browser instance based on the specified environment variable.
+
+    Returns:
+        WebDriver: An instance of the web browser.
+
+    Raises:
+        ValueError: If the specified browser is not supported.
+    """
     logger.debug("Setting browser options")
     browser_name = get_env_variable("BROWSER")
     if browser_name == "Chrome":
@@ -206,6 +278,18 @@ def get_browser():
 
 
 def get_env_variable(var_name: str) -> str:
+    """
+    Retrieves the value of the specified environment variable.
+
+    Args:
+        var_name (str): The name of the environment variable.
+
+    Returns:
+        str: The value of the environment variable.
+
+    Raises:
+        ValueError: If the environment variable is not set or is empty.
+    """
     value = os.getenv(var_name)
     if not value:
         raise ValueError(
@@ -216,6 +300,9 @@ def get_env_variable(var_name: str) -> str:
 
 
 def main():
+    """
+    Main function to run the LinkedIn job application bot.
+    """
     email = get_env_variable("LINKEDIN_EMAIL")
     password = get_env_variable("LINKEDIN_PASSWORD")
     llm_api_key = get_env_variable("LLM_API_KEY")

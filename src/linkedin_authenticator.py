@@ -18,6 +18,14 @@ from src.logging_config import logger
 
 
 class LinkedinAuthenticator:
+    """
+    A class used to authenticate a user to LinkedIn using a web browser.
+
+    Attributes:
+        browser (UnixBrowser): The web browser instance used for automation.
+        email (str): The email address of the LinkedIn account.
+        password (str): The password of the LinkedIn account.
+    """
 
     def __init__(self, browser: UnixBrowser, email: str, password: str):
         self.browser = browser
@@ -26,6 +34,12 @@ class LinkedinAuthenticator:
         logger.debug("LinkedInAuthenticator initialized with browser: %s", browser)
 
     def login(self) -> bool:
+        """
+        Logs in to LinkedIn using the provided browser instance.
+
+        Returns:
+            bool: True if login was successful, False otherwise.
+        """
         logger.info("Starting browser to log in to LinkedIn.")
         self.browser.get("https://www.linkedin.com/feed")
         time.sleep(random.uniform(3, 5))
@@ -37,9 +51,21 @@ class LinkedinAuthenticator:
             return True
 
     def set_browser(self, browser: UnixBrowser):
+        """
+        Sets the browser instance for the LinkedInAuthenticator.
+
+        Args:
+            browser (UnixBrowser): The web browser instance to be used for automation.
+        """
         self.browser = browser
 
     def handle_login(self) -> bool:
+        """
+        Handles the login process to LinkedIn.
+
+        Returns:
+            bool: True if login was successful, False otherwise.
+        """
         logger.info("Navigating to the LinkedIn login page...")
         self.browser.get("https://www.linkedin.com/login")
         time.sleep(random.uniform(3, 5))

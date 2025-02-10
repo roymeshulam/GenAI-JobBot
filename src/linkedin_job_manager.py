@@ -15,7 +15,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import src.utils as utils
 from src.gpt import GPTAnswerer
-from src.linkedinEasyApplier import LinkedinEasyApplier
+from src.linkedin_easy_applier import LinkedinEasyApplier
 from src.logging_config import logger
 from src.models import Job
 
@@ -212,7 +212,7 @@ class LinkedinJobManager:
             self.reconnect()
         else:
             self.apply()
-            self.reconnect(10)
+            self.reconnect(15)
 
     def apply(self):
         logger.info("Starting job application process")
