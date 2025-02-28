@@ -122,7 +122,7 @@ class LinkedinEasyApplier:
             attempts += 1
 
             self.browser.get(job.link)
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
             current_url = self.browser.current_url
 
         if "linkedin.com/premium" in current_url:
@@ -137,7 +137,7 @@ class LinkedinEasyApplier:
     def job_apply(self, job: Job) -> bool:
         if self.browser.current_url != job.link:
             self.browser.get(job.link)
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
 
         try:
             if self.browser.find_element(
@@ -171,7 +171,7 @@ class LinkedinEasyApplier:
             easy_apply_button = self._find_easy_apply_button()
             actions = ActionChains(self.browser)
             actions.move_to_element(easy_apply_button).click().perform()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
 
             self.gpt_answerer.set_job(job)
 
@@ -239,7 +239,7 @@ class LinkedinEasyApplier:
                 )
                 # Click the button using JavaScript
                 self.browser.execute_script("arguments[0].click();", see_more_button)
-                time.sleep(random.uniform(1, 3))
+                time.sleep(random.uniform(1, 15))
             except NoSuchElementException:
                 logger.debug("See more button not found, skipping")
             except MoveTargetOutOfBoundsException:
@@ -300,11 +300,11 @@ class LinkedinEasyApplier:
         button_text = next_button.text.lower()
         if "submit application" in button_text:
             next_button.click()
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
             return True
         elif "continue applying" in button_text:
             next_button.click()
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
             return False
         else:
             progress_pre_click = self.browser.find_element(
@@ -312,7 +312,7 @@ class LinkedinEasyApplier:
                 '//div[contains(@aria-label, "Your job application progress")]',
             ).get_attribute("aria-label")
             next_button.click()
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
             progress_post_click = self.browser.find_element(
                 By.XPATH,
                 '//div[contains(@aria-label, "Your job application progress")]',
@@ -329,7 +329,7 @@ class LinkedinEasyApplier:
                 By.XPATH, "//label[contains(.,'to stay up to date with their page.')]"
             )
             follow_checkbox.click()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
         except Exception:
             pass
 
@@ -337,11 +337,11 @@ class LinkedinEasyApplier:
         logger.debug("Discarding application")
         try:
             self.browser.find_element(By.CLASS_NAME, "artdeco-modal__dismiss").click()
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
             self.browser.find_elements(
                 By.CLASS_NAME, "artdeco-modal__confirm-dialog-btn"
             )[0].click()
-            time.sleep(random.uniform(3, 5))
+            time.sleep(random.uniform(1, 15))
         except Exception as e:
             logger.warning("Failed to discard application: %s", e)
 
@@ -394,10 +394,10 @@ class LinkedinEasyApplier:
             )
             if "resume" in parent.text.lower():
                 element.send_keys(str(self.resume_path.resolve()))
-                time.sleep(random.uniform(1, 3))
+                time.sleep(random.uniform(1, 15))
             elif "cover" in parent.text.lower():
                 self._create_and_upload_cover_letter(element, job)
-                time.sleep(random.uniform(1, 3))
+                time.sleep(random.uniform(1, 15))
 
     def _create_and_upload_cover_letter(self, element: WebElement, job: Job) -> None:
         folder_path = "cover_letters"
@@ -496,7 +496,7 @@ class LinkedinEasyApplier:
             ]
         ):
             checkbox.click()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
             logger.debug("Clicked terms of service checkbox")
             return True
         return False
@@ -547,7 +547,7 @@ class LinkedinEasyApplier:
         if "today" in question_text:
             answer_text = datetime.now().strftime("%m/%d/%Y")
             date_input.send_keys(answer_text)
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
             return True
         if "earliest start date" in question_text:
             two_months_from_today = datetime.now() + timedelta(days=60)
@@ -555,7 +555,7 @@ class LinkedinEasyApplier:
                 "%m/%d/%Y"
             )
             date_input.send_keys(first_day_of_month)
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
             return True
         return False
 
@@ -659,11 +659,11 @@ class LinkedinEasyApplier:
     def _enter_text(self, text_field: WebElement, text: str) -> None:
         text_field.clear()
         text_field.send_keys(text)
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
         text_field.send_keys(Keys.ARROW_DOWN)
         text_field.send_keys(Keys.ENTER)
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
     def _select_radio(self, radios: List[WebElement], answer: str) -> None:
         for radio in radios:
@@ -677,14 +677,14 @@ class LinkedinEasyApplier:
                     By.XPATH, f'//label[@for="{radio.get_attribute("id")}"]'
                 )
                 label_element.click()
-                time.sleep(random.uniform(1, 3))
+                time.sleep(random.uniform(1, 15))
                 return
         radios[-1].click()
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
     def _select_dropdown_option(self, select: Select, text: str) -> None:
         select.select_by_visible_text(text)
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
     def _sanitize_text(self, text: str) -> str:
         sanitized_text = text.lower().strip().replace('"', "").replace("\\", "")

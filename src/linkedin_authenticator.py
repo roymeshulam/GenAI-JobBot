@@ -42,7 +42,7 @@ class LinkedinAuthenticator:
         """
         logger.info("Starting browser to log in to LinkedIn.")
         self.browser.get("https://www.linkedin.com/feed")
-        time.sleep(random.uniform(3, 5))
+        time.sleep(random.uniform(1, 15))
         if "login" in self.browser.current_url:
             logger.info("User is not logged in. Proceeding with login.")
             return self.handle_login()
@@ -68,7 +68,7 @@ class LinkedinAuthenticator:
         """
         logger.info("Navigating to the LinkedIn login page...")
         self.browser.get("https://www.linkedin.com/login")
-        time.sleep(random.uniform(3, 5))
+        time.sleep(random.uniform(1, 15))
         try:
             logger.debug("Entering credentials...")
             username = self.browser.find_element(By.ID, "username")
@@ -82,7 +82,7 @@ class LinkedinAuthenticator:
                 By.XPATH, '//button[@type="submit"]'
             )
             login_button.click()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
             logger.debug("Login form submitted.")
         except NoSuchElementException as e:
             logger.error("Could not log in to LinkedIn. Element not found: %s", e)

@@ -245,7 +245,7 @@ class LinkedinJobManager:
                     "Navigating to results page #%d at URL: %s", job_page_number, url
                 )
                 self.browser.get(url)
-                time.sleep(random.uniform(3, 5))
+                time.sleep(random.uniform(1, 15))
 
                 if self._job_lefs() is False:
                     logger.info(
@@ -283,7 +283,7 @@ class LinkedinJobManager:
                                     continue
 
                                 self.browser.get(job.link)
-                                time.sleep(random.uniform(3, 5))
+                                time.sleep(random.uniform(1, 15))
 
                                 if self._daily_application_exceeded() is True:
                                     logger.info(
@@ -337,7 +337,7 @@ class LinkedinJobManager:
                     successful_applications,
                     failed_applications,
                 )
-                time.sleep(random.uniform(5, 10))
+                time.sleep(random.uniform(1, 15))
 
     def _job_lefs(self) -> bool:
         try:
@@ -451,7 +451,7 @@ class LinkedinJobManager:
 
     def _recruiter_connect(self, url: str) -> bool:
         self.browser.get(url)
-        time.sleep(random.uniform(3, 5))
+        time.sleep(random.uniform(1, 15))
 
         if self._find_button(
             '//button[contains(@class, "artdeco-button--secondary") and contains(., "Pending")]'
@@ -462,12 +462,12 @@ class LinkedinJobManager:
 
         def connect(self, button: WebElement, actions: ActionChains):
             actions.move_to_element(button).click().perform()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
 
             actions.move_to_element(
                 self._find_button('//button[@aria-label="Send without a note"]')
             ).click().perform()
-            time.sleep(random.uniform(1, 3))
+            time.sleep(random.uniform(1, 15))
 
             try:
                 weekly_connections_exceeded_element = self.browser.find_element(
@@ -501,7 +501,7 @@ class LinkedinJobManager:
         actions.move_to_element(
             self._find_button('//button[@aria-label="More actions"]')
         ).click().perform()
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
         if self._find_button(
             '//div[@role="button" and contains(., "Remove Connection")]'
@@ -556,7 +556,7 @@ class LinkedinJobManager:
 
     def extract_job_information_from_tile(self, job_tile):
         self.browser.execute_script("arguments[0].scrollIntoView();", job_tile)
-        time.sleep(random.uniform(1, 2))
+        time.sleep(random.uniform(1, 15))
 
         job_title, company, job_location, apply_method, link = "", "", "", "", ""
         try:
