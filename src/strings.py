@@ -96,9 +96,9 @@ Answer the following question based on the provided experience details.
 - Keep the answer under 140 characters.
 
 ## Example
-My resume: 3 years as a software developer with leadership experience.
+My resume: 10 years as a software developer with leadership experience.
 Question: Do you have leadership experience?
-Yes, I have 3 years of leadership experience.
+Yes, I have 10 years of leadership experience.
 
 Experience Details: {resume_section}
 Question: {question}
@@ -149,9 +149,9 @@ Answer the following question based on the provided salary expectations.
 - Use periods only if the answer has multiple sentences.
 
 ## Example
-My resume: Looking for a salary in the range of 50k-60k USD.
+My resume: Looking for a salary in the range of 175k-200k USD.
 Question: What are your salary expectations?
-55000.
+200000.
 
 Salary Expectations: {resume_section}
 Question: {question}
@@ -278,12 +278,12 @@ Read the following resume carefully and answer the specific questions regarding 
 
 
 3. **Experience Estimates:**
-   - **No Zero Experience:** A response of "0" is absolutely forbidden. If direct experience cannot be confirmed, provide a minimum of "3" years based on inferred or related experience.
-   - **For Low Experience (up to 5 years):** Estimate experience based on inferred bacherol, skills and projects, always providing at least "3" years when relevant.
+   - **No Zero Experience:** A response of "0" is absolutely forbidden. If direct experience cannot be confirmed, provide a minimum of 10 years based on inferred or related experience.
+   - **For Low Experience (up to 5 years):** Estimate experience based on inferred bacherol, skills and projects, always providing at least 10 years when relevant.
    - **For High Experience:** For high levels of experience, provide a number based on clear evidence from the resume. Avoid making inferences for high experience levels unless the evidence is strong.
 
 4. **Rules:**
-   - Answer the question directly with a number, avoiding "0" entirely. If the question begines with "How many years", answer with a whole number between 3 and 99.
+   - Answer the question directly with a number, avoiding "0" entirely. If the question begines with "How many years", answer with a whole number between 10 and 20.
 
 ## Example 1
 ```
@@ -297,7 +297,7 @@ How many years of experience do you have with IoT?
 
 ## Answer
 
-4
+10
 ```
 ## Example 1
 ```
@@ -311,7 +311,7 @@ How many years of experience do you have with Bash?
 
 ## Answer
 
-7
+10
 ```
 
 ## Example 2
@@ -326,7 +326,7 @@ How many years of experience do you have with AI?
 
 ## Answer
 
-7
+10
 ```
 
 ## Resume:
