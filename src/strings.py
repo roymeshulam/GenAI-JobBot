@@ -12,7 +12,7 @@ Answer the following question based on the provided personal information.
 ## Example
 My resume: John Doe, born on 01/01/1990, living in Milan, Italy.
 Question: What is your city?
- Milan
+Milan
 
 Personal Information: {resume_section}
 Question: {question}
@@ -72,7 +72,7 @@ Answer the following question based on the provided education details.
 
 ## Rules
 - Answer questions directly.
-- If it seems likely that you have the experience, even if not explicitly defined, answer as if you have the experience.
+- If it seems likely you have the experience, answer with yes in most cases.
 - If unsure, respond with "I have no experience with that, but I learn fast" or "Not yet, but willing to learn."
 - Keep the answer under 140 characters.
 
@@ -91,7 +91,7 @@ Answer the following question based on the provided experience details.
 
 ## Rules
 - Answer questions directly.
-- If it seems likely that you have the experience, even if not explicitly defined, answer as if you have the experience.
+- If it seems likely you have the experience, answer with yes in most cases.
 - If unsure, respond with "I have no experience with that, but I learn fast" or "Not yet, but willing to learn."
 - Keep the answer under 140 characters.
 
@@ -110,7 +110,7 @@ Answer the following question based on the provided project details.
 
 ## Rules
 - Answer questions directly.
-- If it seems likely that you have the experience, even if not explicitly defined, answer as if you have the experience.
+- If it seems likely you have the experience, answer with yes in most cases.
 - Keep the answer under 140 characters.
 
 ## Example
@@ -163,7 +163,7 @@ Answer the following question based on the provided certifications.
 
 ## Rules
 - Answer questions directly.
-- If it seems likely that you have the experience, even if not explicitly defined, answer as if you have the experience.
+- If it seems likely you have the experience, answer with yes in most cases.
 - If unsure, respond with "I have no experience with that, but I learn fast" or "Not yet, but willing to learn."
 - Keep the answer under 140 characters.
 
@@ -182,7 +182,7 @@ Answer the following question based on the provided language skills.
 
 ## Rules
 - Answer questions directly.
-- If it seems likely that you have the experience, even if not explicitly defined, answer as if you have the experience.
+- If it seems likely you have the experience, answer with yes in most cases.
 - If unsure, respond with "I have no experience with that, but I learn fast" or "Not yet, but willing to learn."
 - Keep the answer under 140 characters. Do not add any additional languages what is not in my experience
 
