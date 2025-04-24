@@ -184,7 +184,7 @@ def validate_config(config_yaml_path: Path) -> dict:
     ]
     validate_boolean_fields(job_types, parameters, "job_types", config_yaml_path)
 
-    date_filters = ["all time", "month", "week", "24 hours"]
+    date_filters = ["all time", "month", "week", "24 hours", "12 hours", "hour"]
     validate_boolean_fields(date_filters, parameters, "date", config_yaml_path)
 
     work_types = ["on-site", "hybrid", "remote"]

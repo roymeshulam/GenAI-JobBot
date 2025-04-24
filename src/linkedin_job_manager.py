@@ -543,6 +543,8 @@ class LinkedinJobManager:
             "month": "&f_TPR=r2592000",
             "week": "&f_TPR=r604800",
             "24 hours": "&f_TPR=r86400",
+            "12 hours": "&f_TPR=r43200",
+            "hour": "&f_TPR=r3600",
         }
         date_param = next(
             (v for k, v in date_mapping.items() if parameters.get("date", {}).get(k)),
