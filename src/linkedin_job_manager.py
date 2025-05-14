@@ -146,6 +146,37 @@ class LinkedinJobManager:
             if conn:
                 conn.close()
 
+    def _load__non_contacted_recruiters(self) -> List[str]:
+        logger.debug("loading non contacted recruiters URLs")
+        try:
+            conn = psycopg2.connect(self.database_url)
+            cursor = conn.cursor()
+            query = """
+                WITH DistinctRecruiters AS (
+                    SELECT recruiter, MIN(id) AS min_id
+                    FROM jobs
+                    WHERE contacted = FALSE
+                    AND recruiter <> ''
+                    AND (recruiter_email IS NULL OR recruiter_email = '')
+                    GROUP BY recruiter
+                )
+                SELECT recruiter
+                FROM DistinctRecruiters
+                ORDER BY min_id DESC;
+            """
+            cursor.execute(query)
+            results = cursor.fetchall()
+            unique_recruiters = [row[0] for row in results]
+            return unique_recruiters if results else []
+        except Exception as e:
+            logger.error("Error loading _load_recruiters: %s", e)
+            raise RuntimeError(f"Error loading _load_recruiters: {e}") from e
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
     def _save_recruiter(self, recruiter: str):
         logger.debug("Updating recruiter status to connected for: %s", recruiter)
         try:
@@ -210,6 +241,8 @@ class LinkedinJobManager:
             self.reapply()
         elif "reconnect" in self.mode:
             self.reconnect()
+        elif "scrape" in self.mode:
+            self.scarpe()
         else:
             self.apply()
             self.reconnect(15)
@@ -314,7 +347,7 @@ class LinkedinJobManager:
                                     applied=True,
                                     connected=True if job.recruiter == "" else False,
                                 )
-                        except Exception:
+                        except RuntimeError:
                             failed_applications += 1
                             logger.info(
                                 "Failed applying to job %s at %s, applications = %d/%d",
@@ -329,7 +362,7 @@ class LinkedinJobManager:
                                 connected=True if job.recruiter == "" else False,
                             )
                             continue
-                except Exception as e:
+                except RuntimeError as e:
                     logger.error("Error during job application: %s", e)
                     continue
                 logger.info(
@@ -375,14 +408,14 @@ class LinkedinJobManager:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
                         EC.visibility_of(button)
                     )
-                except Exception:
+                except RuntimeError:
                     continue
                 try:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
                         EC.element_to_be_clickable(button)
                     )
                     return button
-                except Exception:
+                except RuntimeError:
                     pass
         return None
 
@@ -402,7 +435,7 @@ class LinkedinJobManager:
                         self._save_job(job=job, applied=True, connected=job.connected)
                     else:
                         logger.error("Error during reapply: %s", jobs[i]["link"])
-                except Exception:
+                except RuntimeError:
                     logger.error("Error during reapply: %s", jobs[i]["link"])
 
     def reconnect(self, target: int = 0) -> None:
@@ -439,7 +472,7 @@ class LinkedinJobManager:
                         failures,
                         len(recruiters) - successes,
                     )
-            except Exception:
+            except RuntimeError:
                 failures += 1
                 logger.error(
                     "Failed reconnecting with %s, %d/%d/%d",
@@ -511,6 +544,67 @@ class LinkedinJobManager:
         button = self._find_button('//div[@role="button" and contains(., "Connect")]')
         if button:
             return connect(self=self, button=button, actions=actions)
+
+        return False
+
+    def scarpe(self, target: int = 0) -> None:
+        """
+        Scarpe recruiters' details.
+
+        Args:
+            target (int): The target number of successful scarps. Defaults to 0.
+        """
+        failures = 0
+        successes = 0
+        recruiters = self._load__non_contacted_recruiters()
+        for recruiter in recruiters:
+            if target and successes > target:
+                logger.info("Successful scrapings target reached.")
+                break
+            try:
+                if self._scrape_recruiter(url=recruiter) is True:
+                    successes += 1
+                    logger.info(
+                        "Success scraping %s, %d/%d/%d",
+                        recruiter,
+                        successes,
+                        failures,
+                        len(recruiters) - successes,
+                    )
+                else:
+                    failures += 1
+                    logger.error(
+                        "Failed scraping %s, %d/%d/%d",
+                        recruiter,
+                        successes,
+                        failures,
+                        len(recruiters) - successes,
+                    )
+            except RuntimeError:
+                failures += 1
+                logger.error(
+                    "Failed scraping %s, %d/%d/%d",
+                    recruiter,
+                    successes,
+                    failures,
+                    len(recruiters) - successes,
+                )
+
+    def _scrape_recruiter(self, url: str) -> bool:
+        self.browser.get(url)
+        time.sleep(random.uniform(1, 3))
+
+        link = self.browser.find_element(By.LINK_TEXT, "Contact info")
+        if link:
+            link.click()
+            time.sleep(random.uniform(1, 3))
+
+            email_element = self.browser.find_element(
+                By.XPATH, "//a[contains(@href, 'mailto')]"
+            )
+            if email_element:
+                email = email_element.text
+                return True
 
         return False
 
