@@ -648,7 +648,7 @@ class LinkedinJobManager:
 
                 match = re.search(r"\b[A-Za-z]+\b", self.browser.title)
                 if match:
-                    first_name = match.group(0)
+                    first_name = match.group(0).capitalize()
                     self._update_non_contacted_recruiter(
                         recruiter=url,
                         email=email,
