@@ -1,5 +1,6 @@
 import random
 import time
+import re
 from itertools import product
 from pathlib import Path
 from typing import List, Optional
@@ -146,7 +147,7 @@ class LinkedinJobManager:
             if conn:
                 conn.close()
 
-    def _load__non_contacted_recruiters(self) -> List[str]:
+    def _load_non_contacted_recruiters(self) -> List[str]:
         logger.debug("loading non contacted recruiters URLs")
         try:
             conn = psycopg2.connect(self.database_url)
@@ -157,7 +158,7 @@ class LinkedinJobManager:
                     FROM jobs
                     WHERE contacted = FALSE
                     AND recruiter <> ''
-                    AND (recruiter_email IS NULL OR recruiter_email = '')
+                    AND recruiter_email = ''
                     GROUP BY recruiter
                 )
                 SELECT recruiter
@@ -171,6 +172,50 @@ class LinkedinJobManager:
         except Exception as e:
             logger.error("Error loading _load_recruiters: %s", e)
             raise RuntimeError(f"Error loading _load_recruiters: {e}") from e
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def _update_non_contacted_recruiter(
+        self, recruiter: str, email: str, first_name: str
+    ):
+        logger.debug("Updating non contacted recruiter details: %s", recruiter)
+        try:
+            conn = psycopg2.connect(self.database_url)
+            cursor = conn.cursor()
+            query = """
+            UPDATE jobs
+            SET recruiter_email = %s, recruiter_first_name = %s
+            WHERE recruiter = %s;
+            """
+            cursor.execute(query, (email, first_name, recruiter))
+            conn.commit()
+        except Exception as e:
+            logger.error("Error updating recruiter details: %s", e)
+            raise RuntimeError(f"Error updating recruiter details: {e}") from e
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def invalidate_non_contacted_recruiter(self, recruiter: str):
+        logger.debug("Updating non contacted recruiter details: %s", recruiter)
+        try:
+            conn = psycopg2.connect(self.database_url)
+            cursor = conn.cursor()
+            query = """
+            UPDATE jobs
+            SET contacted = TRUE
+            WHERE recruiter = %s;
+            """
+            cursor.execute(query, (recruiter,))
+            conn.commit()
+        except Exception as e:
+            logger.error("Error updating recruiter details: %s", e)
+            raise RuntimeError(f"Error updating recruiter details: {e}") from e
         finally:
             if cursor:
                 cursor.close()
@@ -246,6 +291,7 @@ class LinkedinJobManager:
         else:
             self.apply()
             self.reconnect(15)
+            self.scarpe(15)
 
     def apply(self):
         logger.info("Starting job application process")
@@ -556,7 +602,7 @@ class LinkedinJobManager:
         """
         failures = 0
         successes = 0
-        recruiters = self._load__non_contacted_recruiters()
+        recruiters = self._load_non_contacted_recruiters()
         for recruiter in recruiters:
             if target and successes > target:
                 logger.info("Successful scrapings target reached.")
@@ -566,15 +612,6 @@ class LinkedinJobManager:
                     successes += 1
                     logger.info(
                         "Success scraping %s, %d/%d/%d",
-                        recruiter,
-                        successes,
-                        failures,
-                        len(recruiters) - successes,
-                    )
-                else:
-                    failures += 1
-                    logger.error(
-                        "Failed scraping %s, %d/%d/%d",
                         recruiter,
                         successes,
                         failures,
@@ -592,20 +629,35 @@ class LinkedinJobManager:
 
     def _scrape_recruiter(self, url: str) -> bool:
         self.browser.get(url)
-        time.sleep(random.uniform(1, 3))
+        time.sleep(random.uniform(1, 15))
 
-        link = self.browser.find_element(By.LINK_TEXT, "Contact info")
-        if link:
-            link.click()
-            time.sleep(random.uniform(1, 3))
+        try:
+            self.browser.find_element(By.LINK_TEXT, "Contact info").click()
+            time.sleep(random.uniform(1, 15))
 
             email_element = self.browser.find_element(
                 By.XPATH, "//a[contains(@href, 'mailto')]"
             )
             if email_element:
-                email = email_element.text
-                return True
+                email = (
+                    email_element.get_attribute("innerHTML")
+                    .replace("<!--", "")
+                    .replace("-->", "")
+                    .strip()
+                )
 
+                match = re.search(r"\b[A-Za-z]+\b", self.browser.title)
+                if match:
+                    first_name = match.group(0)
+                    self._update_non_contacted_recruiter(
+                        recruiter=url,
+                        email=email,
+                        first_name=first_name,
+                    )
+                    return True
+        except NoSuchElementException:
+            pass
+        self.invalidate_non_contacted_recruiter(recruiter=url)
         return False
 
     def get_base_search_url(self, parameters: dict) -> str:
