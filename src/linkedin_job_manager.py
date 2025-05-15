@@ -291,7 +291,7 @@ class LinkedinJobManager:
         else:
             self.apply()
             self.reconnect(15)
-            self.scarpe(15)
+            self.scarpe()
 
     def apply(self):
         logger.info("Starting job application process")
