@@ -7,7 +7,7 @@ from typing import List, Optional
 from webbrowser import UnixBrowser
 
 import psycopg2
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -454,14 +454,14 @@ class LinkedinJobManager:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
                         EC.visibility_of(button)
                     )
-                except RuntimeError:
+                except TimeoutException:
                     continue
                 try:
                     WebDriverWait(self.browser, random.uniform(5, 10)).until(
                         EC.element_to_be_clickable(button)
                     )
                     return button
-                except RuntimeError:
+                except TimeoutException:
                     pass
         return None
 
