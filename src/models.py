@@ -16,8 +16,9 @@ class PersonalInformation:
     phone_prefix: Optional[str]
     phone: Optional[str]
     email: Optional[EmailStr]
-    github: Optional[HttpUrl] = None
-    linkedin: Optional[HttpUrl] = None
+    website: Optional[HttpUrl]
+    github: Optional[HttpUrl]
+    linkedin: Optional[HttpUrl]
 
 
 @dataclass
