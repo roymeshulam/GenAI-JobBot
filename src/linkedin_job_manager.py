@@ -289,9 +289,9 @@ class LinkedinJobManager:
         elif "scrape" in self.mode:
             self.scarpe()
         else:
+            self.scarpe(15)
             self.apply()
             self.reconnect(15)
-            self.scarpe(15)
 
     def apply(self):
         logger.info("Starting job application process")
@@ -499,6 +499,10 @@ class LinkedinJobManager:
                 logger.info("Successful connections target reached.")
                 break
             try:
+                logger.info(
+                    "Trying to reconnect with %s",
+                    recruiter,
+                )
                 if self._recruiter_connect(url=recruiter) is True:
                     successes += 1
                     logger.info(
