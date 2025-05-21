@@ -179,7 +179,7 @@ class LinkedinJobManager:
                 conn.close()
 
     def _update_non_contacted_recruiter(
-        self, recruiter: str, email: str, first_name: str
+        self, recruiter: str, email: str, first_name: str, last_name: str
     ):
         logger.debug("Updating non contacted recruiter details: %s", recruiter)
         try:
@@ -187,10 +187,10 @@ class LinkedinJobManager:
             cursor = conn.cursor()
             query = """
             UPDATE jobs
-            SET recruiter_email = %s, recruiter_first_name = %s
+            SET recruiter_email = %s, recruiter_first_name = %s, recruiter_last_name = %s
             WHERE recruiter = %s;
             """
-            cursor.execute(query, (email, first_name, recruiter))
+            cursor.execute(query, (email, first_name, last_name, recruiter))
             conn.commit()
         except Exception as e:
             logger.error("Error updating recruiter details: %s", e)
@@ -654,13 +654,17 @@ class LinkedinJobManager:
                     .strip()
                 )
 
-                match = re.search(r"\b[A-Za-z]+\b", self.browser.title)
-                if match:
-                    first_name = match.group(0).capitalize()
+                matches = re.findall(r"\b[A-Za-z]+\b", self.browser.title)
+                if matches:
+                    first_name = matches[0].capitalize()
+                    last_name = ""
+                    if len(matches) > 1 and matches[1] != "LinkedIn":
+                        last_name = matches[1].capitalize()
                     self._update_non_contacted_recruiter(
                         recruiter=url,
                         email=email,
                         first_name=first_name,
+                        last_name=last_name,
                     )
                     return True
         except NoSuchElementException:
