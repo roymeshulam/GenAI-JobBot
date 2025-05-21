@@ -483,8 +483,8 @@ class LinkedinJobManager:
                         self._save_job(job=job, applied=True, connected=job.connected)
                     else:
                         logger.error("Error during reapply: %s", jobs[i]["link"])
-                except RuntimeError:
-                    logger.error("Error during reapply: %s", jobs[i]["link"])
+                except Exception as e:
+                    logger.error("Error during reapply: %s %s", jobs[i]["link"], e)
 
     def reconnect(self, target: int = 0) -> None:
         """
@@ -524,14 +524,15 @@ class LinkedinJobManager:
                         failures,
                         len(recruiters) - successes,
                     )
-            except RuntimeError:
+            except Exception as e:
                 failures += 1
                 logger.error(
-                    "Failed reconnecting with %s, %d/%d/%d",
+                    "Failed reconnecting with %s, %d/%d/%d %s",
                     recruiter,
                     successes,
                     failures,
                     len(recruiters) - successes,
+                    e,
                 )
 
     def _recruiter_connect(self, url: str) -> bool:
@@ -623,14 +624,15 @@ class LinkedinJobManager:
                         failures,
                         len(recruiters) - successes,
                     )
-            except RuntimeError:
+            except Exception as e:
                 failures += 1
                 logger.error(
-                    "Failed scraping %s, %d/%d/%d",
+                    "Failed scraping %s, %d/%d/%d %s",
                     recruiter,
                     successes,
                     failures,
                     len(recruiters) - successes,
+                    e,
                 )
 
     def _scrape_recruiter(self, url: str) -> bool:
