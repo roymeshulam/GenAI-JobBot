@@ -361,6 +361,13 @@ class LinkedinJobManager:
                                     )
                                     continue
 
+                                logger.info(
+                                    "Applying for job: %s at %s %s",
+                                    job.title,
+                                    job.company,
+                                    job.link,
+                                )
+
                                 self.browser.get(job.link)
                                 time.sleep(random.uniform(1, 15))
 
@@ -372,12 +379,6 @@ class LinkedinJobManager:
                                     )
                                     return
 
-                                logger.info(
-                                    "Applying for job: %s at %s %s",
-                                    job.title,
-                                    job.company,
-                                    job.link,
-                                )
                                 self.easy_applier_component.job_apply(job)
                                 successful_applications += 1
                                 logger.info(
@@ -393,7 +394,7 @@ class LinkedinJobManager:
                                     applied=True,
                                     connected=True if job.recruiter == "" else False,
                                 )
-                        except RuntimeError:
+                        except Exception:
                             failed_applications += 1
                             logger.info(
                                 "Failed applying to job %s at %s, applications = %d/%d",
@@ -408,9 +409,10 @@ class LinkedinJobManager:
                                 connected=True if job.recruiter == "" else False,
                             )
                             continue
-                except RuntimeError as e:
+                except Exception as e:
                     logger.error("Error during job application: %s", e)
                     continue
+
                 logger.info(
                     "Applying to jobs on this page has been completed, applications = %d/%d",
                     successful_applications,
