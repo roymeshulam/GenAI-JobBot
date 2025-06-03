@@ -323,18 +323,18 @@ class LinkedinJobManager:
                 logger.info(
                     "Navigating to results page #%d at URL: %s", job_page_number, url
                 )
-                self.browser.get(url)
-                time.sleep(random.uniform(1, 15))
-
-                if self._job_lefs() is False:
-                    logger.info(
-                        "No jobs left, applications = %d/%d",
-                        successful_applications,
-                        failed_applications,
-                    )
-                    break
-
                 try:
+                    self.browser.get(url)
+                    time.sleep(random.uniform(1, 15))
+    
+                    if self._job_lefs() is False:
+                        logger.info(
+                            "No jobs left, applications = %d/%d",
+                            successful_applications,
+                            failed_applications,
+                        )
+                        break
+
                     job_list_elements = self.browser.find_elements(
                         By.XPATH, "//li[@data-occludable-job-id]"
                     )
