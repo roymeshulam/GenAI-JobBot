@@ -326,7 +326,7 @@ class LinkedinJobManager:
                 try:
                     self.browser.get(url)
                     time.sleep(random.uniform(1, 15))
-    
+
                     if self._job_lefs() is False:
                         logger.info(
                             "No jobs left, applications = %d/%d",
@@ -394,14 +394,15 @@ class LinkedinJobManager:
                                     applied=True,
                                     connected=True if job.recruiter == "" else False,
                                 )
-                        except Exception:
+                        except Exception as e:
                             failed_applications += 1
-                            logger.info(
+                            logger.error(
                                 "Failed applying to job %s at %s, applications = %d/%d",
                                 job.title,
                                 job.company,
                                 successful_applications,
                                 failed_applications,
+                                exec_info=True,
                             )
                             self._save_job(
                                 job,
@@ -410,7 +411,12 @@ class LinkedinJobManager:
                             )
                             continue
                 except Exception as e:
-                    logger.error("Error during job application: %s", e)
+                    logger.error(
+                        "Error during results page #%d at URL: %s",
+                        job_page_number,
+                        url,
+                        exc_info=True,
+                    )
                     continue
 
                 logger.info(
