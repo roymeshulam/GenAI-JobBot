@@ -289,8 +289,8 @@ class LinkedinJobManager:
         elif "scrape" in self.mode:
             self.scarpe()
         else:
-            self.scarpe(15)
             self.apply()
+            self.scarpe(15)
             self.reconnect(15)
 
     def apply(self):

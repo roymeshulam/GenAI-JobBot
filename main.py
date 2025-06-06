@@ -200,45 +200,43 @@ def validate_config(config_yaml_path: Path) -> dict:
 
 
 def get_browser():
-    """
-    Sets up and returns a web browser instance based on the specified environment variable.
+    """Sets up and returns a web browser instance based on the specified environment variable."""
+    logger.debug("Initializing browser setup")
 
-    Returns:
-        WebDriver: An instance of the web browser.
-
-    Raises:
-        ValueError: If the specified browser is not supported.
-    """
-    logger.debug("Setting browser options")
     browser_name = get_env_variable("BROWSER")
-    if browser_name == "Chrome":
-        options = webdriver.ChromeOptions()
-    elif browser_name == "Edge":
-        options = webdriver.EdgeOptions()
-    elif browser_name == "Firefox":
-        options = webdriver.FirefoxOptions()
-    else:
+    browser_options = {
+        "Chrome": webdriver.ChromeOptions(),
+        "Edge": webdriver.EdgeOptions(),
+        "Firefox": webdriver.FirefoxOptions(),
+    }
+
+    if browser_name not in browser_options:
         raise ValueError(f"Unknown browser value '{browser_name}'.")
 
-    options.add_argument("--start-maximized")
-    options.add_argument("--hide-crash-restore-bubble")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--ignore-certificate-errors")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-gpu")
-    options.add_argument("window-size=1200x800")
-    options.add_argument("--disable-background-timer-throttling")
-    options.add_argument("--disable-backgrounding-occluded-windows")
-    options.add_argument("--disable-translate")
-    options.add_argument("--disable-popup-blocking")
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-default-browser-check")
-    options.add_argument("--disable-logging")
-    options.add_argument("--disable-autofill")
-    options.add_argument("--disable-plugins")
-    options.add_argument("--disable-animations")
-    options.add_argument("--disable-cache")
+    options = browser_options[browser_name]
+    common_args = [
+        "--start-maximized",
+        "--hide-crash-restore-bubble",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--ignore-certificate-errors",
+        "--disable-extensions",
+        "--disable-gpu",
+        "window-size=1200x800",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-translate",
+        "--disable-popup-blocking",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-logging",
+        "--disable-autofill",
+        "--disable-plugins",
+        "--disable-animations",
+        "--disable-cache",
+    ]
+    for arg in common_args:
+        options.add_argument(arg)
 
     if browser_name in ["Chrome", "Edge"]:
         options.add_experimental_option(
@@ -252,29 +250,28 @@ def get_browser():
             },
         )
 
-    profile_path = os.path.join(os.getcwd(), "browser", "linkedin")
-    if not os.path.exists(profile_path):
-        os.makedirs(profile_path)
+    profile_path = os.path.join(os.getcwd(), "browser", browser_name.lower())
+    os.makedirs(profile_path, exist_ok=True)
     logger.debug("Using browser profile directory: %s", profile_path)
-    initial_path = os.path.dirname(profile_path)
-    profile_dir = os.path.basename(profile_path)
-    options.add_argument("--user-data-dir=" + initial_path)
-    options.add_argument("--profile-directory=" + profile_dir)
 
-    browser = None
-    if browser_name == "Chrome":
-        browser = webdriver.Chrome(
-            service=ChromeService(ChromeDriverManager().install()), options=options
+    options.add_argument(f"--user-data-dir={os.path.dirname(profile_path)}")
+    options.add_argument(f"--profile-directory={os.path.basename(profile_path)}")
+
+    browser_services = {
+        "Chrome": ChromeService(ChromeDriverManager().install()),
+        "Edge": EdgeService(EdgeChromiumDriverManager().install()),
+        "Firefox": FirefoxService(GeckoDriverManager().install()),
+    }
+
+    try:
+        browser = webdriver.__dict__[browser_name](
+            service=browser_services[browser_name], options=options
         )
-    elif browser_name == "Edge":
-        browser = webdriver.Edge(
-            service=EdgeService(EdgeChromiumDriverManager().install()), options=options
-        )
-    elif browser_name == "Firefox":
-        browser = webdriver.Firefox(
-            service=FirefoxService(GeckoDriverManager().install()), options=options
-        )
-    return browser
+        browser.set_page_load_timeout(300)
+        return browser
+    except Exception as e:
+        logger.error("Failed to initialize browser: %s", e)
+        raise
 
 
 def get_env_variable(var_name: str) -> str:
