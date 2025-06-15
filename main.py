@@ -267,7 +267,7 @@ def get_browser():
         browser = webdriver.__dict__[browser_name](
             service=browser_services[browser_name], options=options
         )
-        browser.set_page_load_timeout(300)
+        browser.set_page_load_timeout(600)
         return browser
     except Exception as e:
         logger.error("Failed to initialize browser: %s", e)
