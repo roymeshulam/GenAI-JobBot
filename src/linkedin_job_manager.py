@@ -305,7 +305,7 @@ class LinkedinJobManager:
                 "Starting the search for position %s in %s.", position, location
             )
             while True:
-                if successful_applications > 100:
+                if successful_applications > 200:
                     logger.info("Daily applications target reached.")
                     return
 
