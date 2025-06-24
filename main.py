@@ -214,6 +214,7 @@ def get_browser():
         raise ValueError(f"Unknown browser value '{browser_name}'.")
 
     options = browser_options[browser_name]
+    options.page_load_strategy = 'eager'
     common_args = [
         "--start-maximized",
         "--hide-crash-restore-bubble",
