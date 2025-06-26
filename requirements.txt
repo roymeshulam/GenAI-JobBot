@@ -1,10 +1,10 @@
 httpx==0.28.1
 langchain_core==0.3.66
-langchain_openai==0.3.24
+langchain_openai==0.3.25
 pipreqs==0.5.0
 psycopg2==2.9.10
 pydantic==2.11.7
-python-dotenv==1.1.0
+python-dotenv==1.1.1
 python_Levenshtein==0.27.1
 PyYAML==6.0.2
 reportlab==4.2.5

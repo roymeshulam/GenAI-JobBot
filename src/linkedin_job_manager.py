@@ -446,6 +446,7 @@ class LinkedinJobManager:
             if daily_applications_exceeded_element.text in [
                 "The application feature is temporarily unavailable",
                 "You’ve reached the Easy Apply application limit for today. Save this job and come back tomorrow to continue applying.",
+                "You’ve reached today's Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow.",
             ]:
                 return True
         except NoSuchElementException:
