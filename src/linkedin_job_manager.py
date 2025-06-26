@@ -446,6 +446,15 @@ class LinkedinJobManager:
             if daily_applications_exceeded_element.text in [
                 "The application feature is temporarily unavailable",
                 "You’ve reached the Easy Apply application limit for today. Save this job and come back tomorrow to continue applying.",
+            ]:
+                return True
+        except NoSuchElementException:
+            pass
+        try:
+            daily_applications_exceeded_element = self.browser.find_element(
+                By.CLASS_NAME, "artdeco-inline-feedback__message"
+            )
+            if daily_applications_exceeded_element.text in [
                 "You’ve reached today's Easy Apply limit. Great effort applying today. We limit daily submissions to help ensure each application gets the right attention. Save this job and continue applying tomorrow.",
             ]:
                 return True
