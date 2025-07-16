@@ -203,18 +203,8 @@ def get_browser():
     """Sets up and returns a web browser instance based on the specified environment variable."""
     logger.debug("Initializing browser setup")
 
-    browser_name = get_env_variable("BROWSER")
-    browser_options = {
-        "Chrome": webdriver.ChromeOptions(),
-        "Edge": webdriver.EdgeOptions(),
-        "Firefox": webdriver.FirefoxOptions(),
-    }
-
-    if browser_name not in browser_options:
-        raise ValueError(f"Unknown browser value '{browser_name}'.")
-
-    options = browser_options[browser_name]
-    options.page_load_strategy = 'eager'
+    options = webdriver.ChromeOptions()
+    options.page_load_strategy = "eager"
     common_args = [
         "--start-maximized",
         "--hide-crash-restore-bubble",
@@ -239,34 +229,27 @@ def get_browser():
     for arg in common_args:
         options.add_argument(arg)
 
-    if browser_name in ["Chrome", "Edge"]:
-        options.add_experimental_option(
-            "excludeSwitches", ["enable-automation", "enable-logging"]
-        )
-        options.add_experimental_option(
-            "prefs",
-            {
-                "profile.default_content_setting_values.images": 2,
-                "profile.managed_default_content_settings.stylesheets": 2,
-            },
-        )
+    options.add_experimental_option(
+        "excludeSwitches", ["enable-automation", "enable-logging"]
+    )
+    options.add_experimental_option(
+        "prefs",
+        {
+            "profile.default_content_setting_values.images": 2,
+            "profile.managed_default_content_settings.stylesheets": 2,
+        },
+    )
 
-    profile_path = os.path.join(os.getcwd(), "browser", browser_name.lower())
+    profile_path = os.path.join(os.getcwd(), "browser", "chrome")
     os.makedirs(profile_path, exist_ok=True)
     logger.debug("Using browser profile directory: %s", profile_path)
 
     options.add_argument(f"--user-data-dir={os.path.dirname(profile_path)}")
     options.add_argument(f"--profile-directory={os.path.basename(profile_path)}")
 
-    browser_services = {
-        "Chrome": ChromeService(ChromeDriverManager().install()),
-        "Edge": EdgeService(EdgeChromiumDriverManager().install()),
-        "Firefox": FirefoxService(GeckoDriverManager().install()),
-    }
-
     try:
-        browser = webdriver.__dict__[browser_name](
-            service=browser_services[browser_name], options=options
+        browser = webdriver.Chrome(
+            service=ChromeService(ChromeDriverManager().install()), options=options
         )
         browser.set_page_load_timeout(600)
         return browser
