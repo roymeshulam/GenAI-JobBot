@@ -724,7 +724,8 @@ class LinkedinJobManager:
             (v for k, v in date_mapping.items() if parameters.get("date", {}).get(k)),
             "",
         )
-        url_parts.append("f_LF=f_AL")  # Easy Apply
+        url_parts.append("f_AL=true")  # Easy Apply
+        url_parts.append("f_EA=true")  # Under 10 applicants
         base_url = "&".join(url_parts)
         full_url = f"?{base_url}{date_param}"
         logger.debug("Base search URL constructed: %s", full_url)
