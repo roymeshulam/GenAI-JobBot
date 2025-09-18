@@ -3,7 +3,7 @@ import time
 import re
 from itertools import product
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from webbrowser import UnixBrowser
 
 import psycopg2
@@ -147,28 +147,27 @@ class LinkedinJobManager:
             if conn:
                 conn.close()
 
-    def _load_non_contacted_recruiters(self) -> List[str]:
+    def _load_non_contacted_recruiters(self) -> List[Tuple[int, str]]:
         logger.debug("loading non contacted recruiters URLs")
         try:
             conn = psycopg2.connect(self.database_url)
             cursor = conn.cursor()
             query = """
                 WITH DistinctRecruiters AS (
-                    SELECT recruiter, MIN(id) AS min_id
+                    SELECT recruiter, MAX(id) AS max_id
                     FROM jobs
                     WHERE contacted = FALSE
                     AND recruiter <> ''
                     AND recruiter_email = ''
                     GROUP BY recruiter
                 )
-                SELECT recruiter
+                SELECT max_id, recruiter
                 FROM DistinctRecruiters
-                ORDER BY min_id DESC;
+                ORDER BY max_id DESC;
             """
             cursor.execute(query)
             results = cursor.fetchall()
-            unique_recruiters = [row[0] for row in results]
-            return unique_recruiters if results else []
+            return results if results else []
         except Exception as e:
             logger.error("Error loading _load_recruiters: %s", e)
             raise RuntimeError(f"Error loading _load_recruiters: {e}") from e
@@ -179,7 +178,12 @@ class LinkedinJobManager:
                 conn.close()
 
     def _update_non_contacted_recruiter(
-        self, recruiter: str, email: str, first_name: str, last_name: str
+        self,
+        job_id: int,
+        recruiter: str,
+        email: str,
+        first_name: str,
+        last_name: str,
     ):
         logger.debug("Updating non contacted recruiter details: %s", recruiter)
         try:
@@ -188,9 +192,9 @@ class LinkedinJobManager:
             query = """
             UPDATE jobs
             SET recruiter_email = %s, recruiter_first_name = %s, recruiter_last_name = %s
-            WHERE recruiter = %s;
+            WHERE id = %s AND recruiter = %s;
             """
-            cursor.execute(query, (email, first_name, last_name, recruiter))
+            cursor.execute(query, (email, first_name, last_name, job_id, recruiter))
             conn.commit()
         except Exception as e:
             logger.error("Error updating recruiter details: %s", e)
@@ -201,7 +205,7 @@ class LinkedinJobManager:
             if conn:
                 conn.close()
 
-    def invalidate_non_contacted_recruiter(self, recruiter: str):
+    def invalidate_non_contacted_recruiter(self, job_id: int, recruiter: str):
         logger.debug("Updating non contacted recruiter details: %s", recruiter)
         try:
             conn = psycopg2.connect(self.database_url)
@@ -209,9 +213,15 @@ class LinkedinJobManager:
             query = """
             UPDATE jobs
             SET contacted = TRUE
-            WHERE recruiter = %s;
+            WHERE id = %s AND recruiter = %s;
             """
-            cursor.execute(query, (recruiter,))
+            cursor.execute(
+                query,
+                (
+                    job_id,
+                    recruiter,
+                ),
+            )
             conn.commit()
         except Exception as e:
             logger.error("Error updating recruiter details: %s", e)
@@ -394,7 +404,7 @@ class LinkedinJobManager:
                                     applied=True,
                                     connected=True if job.recruiter == "" else False,
                                 )
-                        except Exception as e:
+                        except Exception:
                             failed_applications += 1
                             logger.error(
                                 "Failed applying to job %s at %s, applications = %d/%d",
@@ -410,7 +420,7 @@ class LinkedinJobManager:
                                 connected=True if job.recruiter == "" else False,
                             )
                             continue
-                except Exception as e:
+                except Exception:
                     logger.error(
                         "Error during results page #%d at URL: %s",
                         job_page_number,
@@ -626,12 +636,12 @@ class LinkedinJobManager:
         failures = 0
         successes = 0
         recruiters = self._load_non_contacted_recruiters()
-        for recruiter in recruiters:
+        for job_id, recruiter in recruiters:
             if target and successes > target:
                 logger.info("Successful scrapings target reached.")
                 break
             try:
-                if self._scrape_recruiter(url=recruiter) is True:
+                if self._scrape_recruiter(job_id=job_id, url=recruiter) is True:
                     successes += 1
                     logger.info(
                         "Success scraping %s, %d/%d/%d",
@@ -651,7 +661,7 @@ class LinkedinJobManager:
                     e,
                 )
 
-    def _scrape_recruiter(self, url: str) -> bool:
+    def _scrape_recruiter(self, job_id: int, url: str) -> bool:
         self.browser.get(url)
         time.sleep(random.uniform(1, 15))
 
@@ -677,6 +687,7 @@ class LinkedinJobManager:
                     if len(matches) > 1 and matches[1] != "LinkedIn":
                         last_name = matches[1].capitalize()
                     self._update_non_contacted_recruiter(
+                        job_id=job_id,
                         recruiter=url,
                         email=email,
                         first_name=first_name,
@@ -685,7 +696,7 @@ class LinkedinJobManager:
                     return True
         except NoSuchElementException:
             pass
-        self.invalidate_non_contacted_recruiter(recruiter=url)
+        self.invalidate_non_contacted_recruiter(job_id=job_id, recruiter=url)
         return False
 
     def get_base_search_url(self, parameters: dict) -> str:
